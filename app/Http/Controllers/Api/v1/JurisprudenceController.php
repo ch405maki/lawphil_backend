@@ -1,46 +1,47 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Jurisprudence;
 use App\Imports\JurisprudenceImport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
 
 class JurisprudenceController extends Controller 
 {
     public function index(Request $request) 
     {
-        $query = Jurisprudence::query();
+        try {
+            $query = Jurisprudence::query();
 
-        if ($request->filled('search')) {
-            $s = $request->search;
-            $query->where(function($q) use ($s) {
-                $q->where('citation', 'LIKE', "%$s%")
-                  ->orWhere('gr_number', 'LIKE', "%$s%");
-            });
+            if ($request->filled('search')) {
+                $s = $request->search;
+                $query->where(function($q) use ($s) {
+                    $q->where('citation', 'LIKE', "%$s%")
+                    ->orWhere('gr_number', 'LIKE', "%$s%");
+                });
+            }
+
+            if ($request->filled('year')) {
+                $query->whereYear('date', $request->year);
+            }
+
+            if ($request->sort === 'az') {
+                $query->orderBy('citation', 'asc');
+            } elseif ($request->sort === 'za') {
+                $query->orderBy('citation', 'desc');
+            } elseif ($request->sort === 'oldest') {
+                $query->orderBy('date', 'asc');
+            } else {
+                $query->orderBy('date', 'desc');
+            }
+
+            return response()->json($query->paginate($request->get('rows', 10)));
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        if ($request->filled('year')) {
-            $query->whereYear('date', $request->year);
-        }
-
-        if ($request->sort === 'az') {
-            $query->orderBy('citation', 'asc');
-        } elseif ($request->sort === 'za') {
-            $query->orderBy('citation', 'desc');
-        } elseif ($request->sort === 'oldest') {
-            $query->orderBy('date', 'asc');
-        } else {
-            $query->orderBy('date', 'desc');
-        }
-
-        return Inertia::render('Jurisprudence/Index', [
-            'cases' => $query->paginate($request->get('rows', 10))->withQueryString(),
-            'filters' => $request->only(['search', 'year', 'sort', 'rows'])
-        ]);
     }
 
     public function update(Request $request, $id) 
@@ -57,7 +58,6 @@ class JurisprudenceController extends Controller
         $data = $request->only(['gr_number', 'date', 'citation', 'ponente', 'reference', 'url']);
 
         if ($request->hasFile('pdf_file')) {
-            // Delete old file if it exists
             if ($record->pdf_path) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $record->pdf_path));
             }
@@ -69,7 +69,7 @@ class JurisprudenceController extends Controller
 
         $record->update($data);
 
-        return redirect()->back();
+        return response()->json($record);
     }
 
     public function destroy($id) 
@@ -79,27 +79,17 @@ class JurisprudenceController extends Controller
             Storage::disk('public')->delete(str_replace('/storage/', '', $record->pdf_path));
         }
         $record->delete();
-
-        return redirect()->back();
-    }
-
-    public function truncate()
-    {
-        Jurisprudence::query()->delete();
-        Storage::disk('public')->deleteDirectory('jurisprudence_pdfs');
-
-        return redirect()->back();
+        return response()->json(['status' => 'deleted']);
     }
 
     public function import(Request $request) 
     {
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
-
         try {
             Excel::import(new JurisprudenceImport, $request->file('file'));
-            return redirect()->back();
+            return response()->json(['message' => 'Import Successful']);
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['file' => 'Import failed: ' . $e->getMessage()]);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 }

@@ -20,9 +20,10 @@ return new class extends Migration
             $table->text('reference')->nullable();
             $table->string('url')->nullable();
             $table->boolean('pdf_availability')->default(false);
+            $table->string('pdf_path')->nullable();
             $table->string('ponente')->nullable();
             $table->text('subject')->nullable();
-            $table->timestamps(); // Generates created_at and updated_at
+            $table->timestamps(); 
         });
     }
 

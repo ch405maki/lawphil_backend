@@ -17,6 +17,12 @@ class Jurisprudence extends Model
         'reference', 
         'url', 
         'pdf_availability',
+        'pdf_path',
         'subject' 
+    ];
+
+    protected $casts = [
+        'pdf_availability' => 'boolean',
+        'date' => 'date',
     ];
 }
