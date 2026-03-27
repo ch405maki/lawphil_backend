@@ -16,30 +16,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    // 1. Page Views (Inertia)
-    Route::get('/jurisprudence', function () {
-        return Inertia::render('Jurisprudence/Index'); 
-    })->name('jurisprudence.index');
-
-    // 2. Data APIs (JSON)
-    Route::prefix('api')->group(function () {
-        Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('api.jurisprudence.index');
-        // FIXED: Added the update route for your axios.put calls
-        Route::put('/jurisprudence/{id}', [JurisprudenceController::class, 'update'])->name('api.jurisprudence.update');
-    });
-
-    // 3. Admin/Action Routes
-    Route::prefix('admin')->group(function () {
-        Route::post('/jurisprudence/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
-        
-        // FIXED: Added the truncate route
-        Route::delete('/jurisprudence/truncate', [JurisprudenceController::class, 'truncate'])->name('jurisprudence.truncate');
-        
-        Route::delete('/jurisprudence/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
-    });
+    Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+    
+    Route::post('/jurisprudence/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
+    Route::post('/jurisprudence/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
+    Route::delete('/jurisprudence/truncate', [JurisprudenceController::class, 'truncate'])->name('jurisprudence.truncate');
+    Route::delete('/jurisprudence/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    
     Route::get('/profile-pictures', [ProfilePictureController::class, 'index'])->name('profile-pictures.index');
+    Route::post('/profile-pictures', [ProfilePictureController::class, 'store'])->name('profile-pictures.store');
 });
 
 require __DIR__.'/settings.php';

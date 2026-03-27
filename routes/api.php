@@ -4,12 +4,21 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
+use App\Http\Controllers\Api\v1\JurisprudenceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Jurisprudence Management
+Route::prefix('jurisprudence')->group(function () {
+    Route::get('/', [JurisprudenceController::class, 'index'])->name('api.jurisprudence.index');
+    Route::post('/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
+    Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('api.jurisprudence.update');
+    Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
+});
 
+// User Management
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::post('/users', [UserController::class, 'store']);
 Route::post('/upload-users', [UserController::class, 'uploadUsers']);
