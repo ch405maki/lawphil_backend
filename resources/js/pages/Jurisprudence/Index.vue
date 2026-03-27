@@ -102,7 +102,6 @@ const updateCase = () => {
     processing.value = true;
 
     const formData = new FormData();
-    formData.append('_method', 'PUT'); 
     formData.append('gr_number', currentCase.gr_number || '');
     formData.append('date', currentCase.date || '');
     formData.append('citation', currentCase.citation || '');
@@ -197,9 +196,10 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'n
                             <tr>
                                 <th class="px-6 py-4 w-[15%]">G.R. & Date</th>
                                 <th class="px-6 py-4 w-[40%]">Case Title</th>
-                                <th class="px-6 py-4 w-[15%] text-center">Reference</th>
+                                <th class="px-6 py-4 w-[10%] text-center">Volume</th>
+                                <th class="px-6 py-4 w-[10%] text-center">Reference</th>
                                 <th class="px-6 py-4 w-[10%] text-center">PDF</th>
-                                <th class="px-6 py-4 w-[20%] text-right">Actions</th>
+                                <th class="px-6 py-4 w-[15%] text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -213,26 +213,33 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'n
                                         {{ item.citation }}
                                     </div>
                                     <div class="text-[10px] text-slate-400 mt-1.5 uppercase tracking-tighter italic">
-                                        Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
+                                        Ponente: {{ item.ponente || 'N/A' }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-5 align-top text-center">
+                                    <span class="inline-block px-2 py-1 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">
+                                        {{ item.reference || 'N/A' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 align-top text-center">
                                     <a v-if="item.url" :href="item.url" target="_blank" class="text-[#5c1e99] hover:underline text-xs font-bold inline-flex items-center gap-1">
-                                        Link ↗
+                                        URL
                                     </a>
                                     <span v-else class="text-slate-300">—</span>
                                 </td>
                                 <td class="px-6 py-5 align-top text-center">
                                     <a v-if="item.pdf_availability" :href="item.pdf_path" target="_blank" 
-                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                                        <span class="text-xs font-bold">PDF</span>
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#5a1e8f]/10 text-[#5a1e8f] hover:bg-[#b331fe] hover:text-white transition-all shadow-sm group/pdf">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
                                     </a>
                                     <span v-else class="text-slate-200">—</span>
                                 </td>
                                 <td class="px-6 py-5 align-top text-right">
                                     <div class="flex justify-end gap-4">
                                         <button @click="openEdit(item)" class="text-[#5c1e99] hover:text-[#4a187a] font-bold">Edit</button>
-                                        <button @click="deleteCase(item.id)" class="text-slate-300 hover:text-red-500 transition-colors">Delete</button>
+                                        <button @click="deleteCase(item.id)" class="text-[#000000] hover:text-[#222222] font-bold">Delete</button>
                                     </div>
                                 </td>
                             </tr>
