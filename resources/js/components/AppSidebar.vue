@@ -7,48 +7,35 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, UserRoundCog, BarChart3, Cog, HardDriveDownload, Building2 } from 'lucide-vue-next';
+import { LayoutGrid, UserRoundCog, BarChart3, Gavel, FileUp } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
-
-interface DropdownNavItem extends NavItem {
-    children?: NavItem[];
-    isOpen?: boolean;
-}
 
 const user = usePage().props.auth.user;
 
 const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'User Management',
-        href: '/users',
-        icon: UserRoundCog,
-    },
+    { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
+    { title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel },
+    { title: 'User Management', href: route('users.index'), icon: UserRoundCog },
 ];
 
-const reportItems = ref<DropdownNavItem[]>([
-        {
-            title: 'Reports',
-            href: '#',
-            icon: BarChart3,
-            isOpen: false,
-            children: [
-            { title: 'Item 1', href: '#'},
-            { title: 'Item 2', href: '#'},
-            ],
-        },
-    ]);
+const adminNavItems: NavItem[] = [
+    { title: 'Import Cases', href: route('jurisprudence.index'), icon: FileUp },
+];
+
+const reportItems = ref([
+    {
+        title: 'Reports',
+        href: '#',
+        icon: BarChart3,
+        children: [
+            { title: 'Case Stats', href: '#' },
+            { title: 'User Logs', href: '#' },
+        ],
+    },
+]);
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Configuration',
-        href: '/profile-pictures',
-        icon: LayoutGrid,
-    },
+    { title: 'Configuration', href: route('profile-pictures.index'), icon: LayoutGrid },
 ];
 </script>
 
@@ -68,6 +55,12 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            
+            <SidebarGroup v-if="user.role === 'admin'">
+                <SidebarGroupLabel>Data Management</SidebarGroupLabel>
+                <NavMain :items="adminNavItems" />
+            </SidebarGroup>
+
             <NavMain :items="reportItems" group-label="Reports" />
         </SidebarContent>
 
