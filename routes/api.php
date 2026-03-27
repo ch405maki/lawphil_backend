@@ -12,9 +12,9 @@ Route::get('/user', function (Request $request) {
 
 // Jurisprudence Management
 Route::prefix('jurisprudence')->group(function () {
-    Route::get('/', [JurisprudenceController::class, 'index'])->name('api.jurisprudence.index');
+    Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::post('/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
-    Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('api.jurisprudence.update');
+    Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
 });
 

@@ -16,12 +16,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
-    
-    Route::post('/jurisprudence/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
-    Route::post('/jurisprudence/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
-    Route::delete('/jurisprudence/truncate', [JurisprudenceController::class, 'truncate'])->name('jurisprudence.truncate');
-    Route::delete('/jurisprudence/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
+    // jurisprudence
+    Route::prefix('jurisprudence')->group(function () {
+    Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+    Route::get('/create', [JurisprudenceController::class, 'create'])->name('jurisprudence.create');
+    Route::post('/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
+    });
+
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');

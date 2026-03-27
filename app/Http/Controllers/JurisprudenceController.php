@@ -43,52 +43,9 @@ class JurisprudenceController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id) 
+    public function create() 
     {
-        $record = Jurisprudence::findOrFail($id);
-
-        $request->validate([
-            'gr_number' => 'required|string',
-            'date'      => 'required|date',
-            'citation'  => 'required|string',
-            'pdf_file'  => 'nullable|mimes:pdf|max:15360', 
-        ]);
-
-        $data = $request->only(['gr_number', 'date', 'citation', 'ponente', 'reference', 'url']);
-
-        if ($request->hasFile('pdf_file')) {
-            // Delete old file if it exists
-            if ($record->pdf_path) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $record->pdf_path));
-            }
-
-            $path = $request->file('pdf_file')->store('jurisprudence_pdfs', 'public');
-            $data['pdf_path'] = '/storage/' . $path;
-            $data['pdf_availability'] = true;
-        }
-
-        $record->update($data);
-
-        return redirect()->back();
-    }
-
-    public function destroy($id) 
-    {
-        $record = Jurisprudence::findOrFail($id);
-        if ($record->pdf_path) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $record->pdf_path));
-        }
-        $record->delete();
-
-        return redirect()->back();
-    }
-
-    public function truncate()
-    {
-        Jurisprudence::query()->delete();
-        Storage::disk('public')->deleteDirectory('jurisprudence_pdfs');
-
-        return redirect()->back();
+        return Inertia::render('Jurisprudence/Create');
     }
 
     public function import(Request $request) 
