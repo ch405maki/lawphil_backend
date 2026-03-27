@@ -9,6 +9,14 @@ class Jurisprudence extends Model
     protected $table = 'jurisprudence'; 
 
     protected $fillable = [
-        'gr_number', 'date', 'citation', 'ponente', 'reference', 'url', 'pdf_availability'
+        'user_id',
+        'gr_number', 
+        'date', 
+        'citation', 
+        'ponente', 
+        'reference', 
+        'url', 
+        'pdf_availability',
+        'subject' 
     ];
 }
