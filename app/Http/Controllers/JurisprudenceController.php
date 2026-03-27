@@ -18,7 +18,7 @@ class JurisprudenceController extends Controller {
                 $s = $request->search;
                 $query->where(function($q) use ($s) {
                     $q->where('citation', 'LIKE', "%$s%")
-                      ->orWhere('gr_number', 'LIKE', "%$s%");
+                    ->orWhere('gr_number', 'LIKE', "%$s%");
                 });
             }
 

@@ -24,6 +24,30 @@ const currentCase = reactive({
     pdf_path: '' 
 });
 
+const importExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    loading.value = true;
+    try {
+        await axios.post(route('jurisprudence.import'), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        alert('Import Successful');
+        fetchData(1);
+    } catch (e) {
+        console.error("Import Error:", e.response?.data || e.message);
+        alert("Import failed: " + (e.response?.data?.message || "Check file format"));
+    } finally {
+        loading.value = false;
+        e.target.value = '';
+    }
+};
+
 const fetchData = async (page = 1) => {
     loading.value = true;
     try {
