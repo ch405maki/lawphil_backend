@@ -81,17 +81,13 @@ class JurisprudenceImportController extends Controller
                         $pdfAvailability = $this->cleanValue($row[6] ?? null);
                         $subject = $this->cleanValue($row[7] ?? null);
                         
-                        // Validate required fields
+                        // Validate required fields (only gr_number and date are required)
                         if (empty($grNumber)) {
                             throw new \Exception("Row " . ($rowIndex + 2) . ": GR Number is required");
                         }
                         
                         if (empty($dateValue)) {
                             throw new \Exception("Row " . ($rowIndex + 2) . ": Date is required");
-                        }
-                        
-                        if (empty($subject)) {
-                            throw new \Exception("Row " . ($rowIndex + 2) . ": Subject is required");
                         }
                         
                         // Process date (handle Excel date format)
@@ -105,14 +101,13 @@ class JurisprudenceImportController extends Controller
                         if (!empty($pdfAvailability)) {
                             $pdfAvailabilityBool = $this->parseBoolean($pdfAvailability);
                         }
-                        // If empty, it stays false (0)
                         
                         // Validate URL if provided
                         if (!empty($url) && !filter_var($url, FILTER_VALIDATE_URL)) {
                             throw new \Exception("Row " . ($rowIndex + 2) . ": Invalid URL format");
                         }
                         
-                        // Prepare data for insertion - empty strings become null, but pdf_availability defaults to false
+                        // Prepare data for insertion - all fields can be null except gr_number and date
                         $jurisprudenceData = [
                             'user_id' => 1, // Hardcoded for now, replace with auth()->id() when auth is ready
                             'gr_number' => $grNumber,
@@ -121,8 +116,8 @@ class JurisprudenceImportController extends Controller
                             'ponente' => !empty($ponente) ? $ponente : null,
                             'reference' => !empty($reference) ? $reference : null,
                             'url' => !empty($url) ? $url : null,
-                            'pdf_availability' => $pdfAvailabilityBool, // Will be false if empty
-                            'subject' => $subject,
+                            'pdf_availability' => $pdfAvailabilityBool,
+                            'subject' => !empty($subject) ? $subject : null, // Subject is now nullable
                         ];
                         
                         // Create jurisprudence record
@@ -186,25 +181,25 @@ class JurisprudenceImportController extends Controller
                 'E1' => 'reference',
                 'F1' => 'url',
                 'G1' => 'pdf_availability',
-                'H1' => 'subject*'
+                'H1' => 'subject'
             ];
             
             foreach ($headers as $cell => $value) {
                 $sheet->setCellValue($cell, $value);
             }
             
-            // Add notes about required fields and defaults
+            // Add notes about required fields
             $sheet->setCellValue('J1', 'INSTRUCTIONS:');
             $sheet->setCellValue('J2', '* = Required field');
-            $sheet->setCellValue('J3', 'Date format: YYYY-MM-DD (e.g., 2024-01-15)');
-            $sheet->setCellValue('J4', 'PDF Availability: Yes/No, True/False, 1/0');
-            $sheet->setCellValue('J5', '⚠️ IMPORTANT: If PDF Availability is left BLANK, it will default to 0 (No)');
-            $sheet->setCellValue('J6', 'Empty optional fields (citation, ponente, reference, url) will be NULL');
+            $sheet->setCellValue('J3', 'Required fields: GR Number and Date only');
+            $sheet->setCellValue('J4', 'Date format: YYYY-MM-DD (e.g., 2024-01-15)');
+            $sheet->setCellValue('J5', 'PDF Availability: Yes/No, True/False, 1/0 (blank defaults to 0/No)');
+            $sheet->setCellValue('J6', 'All other fields (citation, ponente, reference, url, subject) can be left blank and will be NULL');
             $sheet->setCellValue('J7', 'URL must be a valid URL if provided');
             
             // Add example data with nulls
             $examples = [
-                // Example 1: Complete data with PDF available
+                // Example 1: Complete data
                 'A2' => 'G.R. No. 123456',
                 'B2' => '2024-01-15',
                 'C2' => '123 SCRA 456',
@@ -214,35 +209,35 @@ class JurisprudenceImportController extends Controller
                 'G2' => 'Yes',
                 'H2' => 'Civil Law',
                 
-                // Example 2: Empty PDF availability (will default to 0/No)
+                // Example 2: With empty subject and other optional fields
                 'A3' => 'G.R. No. 123457',
                 'B3' => '2024-02-20',
-                'C3' => '125 SCRA 789',
-                'D3' => 'Justice Reyes',
-                'E3' => 'Some reference',
-                'F3' => 'https://example.com/case2',
-                'G3' => '',  // Empty -> will default to false (0)
-                'H3' => 'Criminal Law',
+                'C3' => '',  // Empty citation -> will be NULL
+                'D3' => '',  // Empty ponente -> will be NULL
+                'E3' => '',  // Empty reference -> will be NULL
+                'F3' => '',  // Empty url -> will be NULL
+                'G3' => 'No',
+                'H3' => '',  // Empty subject -> will be NULL
                 
-                // Example 3: With empty optional fields (will be NULL)
+                // Example 3: Only required fields (gr_number and date)
                 'A4' => 'G.R. No. 123458',
                 'B4' => '2024-03-10',
-                'C4' => '',  // Empty citation -> will be NULL
-                'D4' => '',  // Empty ponente -> will be NULL
-                'E4' => '',  // Empty reference -> will be NULL
-                'F4' => '',  // Empty url -> will be NULL
-                'G4' => 'No',
-                'H4' => 'Labor Law',
+                'C4' => '',  // Empty
+                'D4' => '',  // Empty
+                'E4' => '',  // Empty
+                'F4' => '',  // Empty
+                'G4' => '',  // Empty -> defaults to 0/No
+                'H4' => '',  // Empty subject -> will be NULL
                 
-                // Example 4: PDF availability explicitly set to Yes
+                // Example 4: With subject but other fields empty
                 'A5' => 'G.R. No. 123459',
                 'B5' => '2024-04-05',
                 'C5' => '',
-                'D5' => 'Justice Santos',
+                'D5' => '',
                 'E5' => '',
                 'F5' => '',
                 'G5' => 'Yes',
-                'H5' => 'Commercial Law',
+                'H5' => 'Labor Law',
             ];
             
             foreach ($examples as $cell => $value) {
@@ -265,9 +260,8 @@ class JurisprudenceImportController extends Controller
             ];
             $sheet->getStyle('A1')->applyFromArray($requiredStyle);
             $sheet->getStyle('B1')->applyFromArray($requiredStyle);
-            $sheet->getStyle('H1')->applyFromArray($requiredStyle);
             
-            // Style instruction area with warning highlight
+            // Style instruction area
             $instructionStyle = [
                 'font' => ['italic' => true, 'size' => 10],
                 'fill' => [
@@ -276,12 +270,6 @@ class JurisprudenceImportController extends Controller
                 ]
             ];
             $sheet->getStyle('J1:J7')->applyFromArray($instructionStyle);
-            
-            // Highlight the default value note
-            $warningStyle = [
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FF6B00']],
-            ];
-            $sheet->getStyle('J5')->applyFromArray($warningStyle);
             
             // Auto-size columns
             foreach (range('A', 'H') as $col) {
