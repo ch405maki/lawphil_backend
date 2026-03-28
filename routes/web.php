@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
-use App\Http\Controllers\JurisprudenceController;
+use App\Http\Controllers\Web\JurisprudenceController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -20,7 +20,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::get('/create', [JurisprudenceController::class, 'create'])->name('jurisprudence.create');
-    Route::post('/import', [JurisprudenceController::class, 'import'])->name('jurisprudence.import');
     });
 
 

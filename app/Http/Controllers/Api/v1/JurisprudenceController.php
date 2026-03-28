@@ -82,7 +82,7 @@ class JurisprudenceController extends Controller
         return response()->json(['status' => 'deleted']);
     }
 
-    public function import(Request $request) 
+    public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
         try {
