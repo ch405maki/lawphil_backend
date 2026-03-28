@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, reactive, watch, computed, onMounted } from 'vue';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { toast } from 'vue-sonner';
+import { Head } from '@inertiajs/vue3';
 
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Custom Components
 import EditCaseDialog from '@/components/jurisprudence/EditCaseDialog.vue';
 import DeleteCaseDialog from '@/components/jurisprudence/DeleteCaseDialog.vue';
+import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
 
 // Icons
 import {
@@ -62,7 +64,6 @@ const cases = ref<any>({
 });
 
 const search = ref('');
-const importing = ref(false);
 const showEditModal = ref(false);
 const showDeleteDialog = ref(false);
 const deleteId = ref<number | null>(null);
@@ -137,33 +138,15 @@ const fetchData = async (page = 1) => {
   }
 };
 
-const importExcel = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
+// Handle successful import
+const handleImportSuccess = (data: any) => {
+    toast.success(`Import successful! ${data.imported} records imported.`);
+    fetchData(); // Refresh the data after import
+};
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    importing.value = true;
-    
-    try {
-      await axios.post('/api/jurisprudence/import', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-        }
-      });
-      
-      toast.success('Import completed successfully!');
-      await fetchData(); // Refresh the data after import
-    } catch (error) {
-      console.error('Import error:', error);
-      toast.error('Import failed. Please check your file format.');
-    } finally {
-      importing.value = false;
-      target.value = '';
-    }
+// Handle import error
+const handleImportError = (error: any) => {
+    toast.error(error.message || 'Import failed. Please check your file format.');
 };
 
 // Watch for filter changes
@@ -206,16 +189,6 @@ onMounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="min-h-screen bg-background p-4">
             
-            <!-- Import Loading Overlay -->
-            <div v-if="importing" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <Card class="w-80">
-                    <CardContent class="flex flex-col items-center gap-4 pt-6">
-                        <Loader2 class="h-8 w-8 animate-spin text-primary" />
-                        <p class="text-sm font-medium">Processing Import...</p>
-                    </CardContent>
-                </Card>
-            </div>
-
             <!-- Header -->
             <div class="mb-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -224,13 +197,13 @@ onMounted(() => {
                         <p class="text-muted-foreground">Legal Archives Management System</p>
                     </div>
                     <div class="flex gap-2">
-                        <Button variant="outline" class="gap-2">
-                            <FileSpreadsheet class="h-4 w-4" />
-                            <Label class="cursor-pointer">
-                                Import Excel/CSV
-                                <input type="file" @change="importExcel" class="hidden" accept=".xlsx,.xls,.csv" />
-                            </Label>
-                        </Button>
+                        <ExcelImportDialog 
+                            trigger-text="Import Excel/CSV"
+                            trigger-variant="outline"
+                            :trigger-icon="FileSpreadsheet"
+                            @import-success="handleImportSuccess"
+                            @import-error="handleImportError"
+                        />
                         <Button @click="goToCreate" class="gap-2">
                             <Plus class="h-4 w-4" />
                             Add New Case
@@ -454,4 +427,3 @@ onMounted(() => {
         />
     </AppLayout>
 </template>
-
