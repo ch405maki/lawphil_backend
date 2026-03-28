@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import axios, { AxiosError } from 'axios';
-import { toast } from 'vue-sonner';
+import { useToast } from 'vue-toastification';
 
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import {
 
 // Icons
 import { Loader2 } from 'lucide-vue-next';
+
+const toast = useToast();
 
 const props = defineProps<{
   open: boolean;
@@ -40,26 +42,27 @@ const deleteCase = async () => {
   
   processing.value = true;
 
-  const promise = axios.delete(`/api/jurisprudence/${props.caseId}`, {
-    headers: {
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    }
-  });
+  try {
+    const response = await axios.delete(`/api/jurisprudence/${props.caseId}`, {
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      }
+    });
 
-  toast.promise(promise, {
-    loading: 'Deleting case...',
-    success: () => {
+    if (response.data.success) {
+      toast.success('Case deleted successfully!');
       emit('update:open', false);
       emit('deleted');
-      return 'Case deleted successfully!';
-    },
-    error: (err: AxiosError<ErrorResponse>) => {
-      return err.response?.data?.message || 'Failed to delete case';
-    },
-    finally: () => {
-      processing.value = false;
+    } else {
+      throw new Error(response.data.message || 'Failed to delete case');
     }
-  });
+  } catch (error: any) {
+    console.error('Error deleting case:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to delete case';
+    toast.error(errorMessage);
+  } finally {
+    processing.value = false;
+  }
 };
 
 const closeDialog = () => {

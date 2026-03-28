@@ -14,6 +14,7 @@ Route::get('/user', function (Request $request) {
 // Jurisprudence Management
 Route::prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+    Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
 });

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios, { AxiosError } from 'axios';
-import { toast } from 'vue-sonner';
+import { useToast } from 'vue-toastification';
 
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,8 @@ import {
 // Icons
 import { Loader2 } from 'lucide-vue-next';
 
+const toast = useToast();
+
 interface CaseData {
   id: number | null;
   gr_number: string;
@@ -28,6 +31,7 @@ interface CaseData {
   ponente: string;
   reference: string;
   url: string;
+  pdf_availability?: boolean;
 }
 
 interface ValidationErrors {
@@ -37,6 +41,7 @@ interface ValidationErrors {
   ponente?: string[];
   reference?: string[];
   url?: string[];
+  pdf_availability?: string[];
 }
 
 interface ErrorResponse {
@@ -64,6 +69,7 @@ const formData = ref({
   ponente: '',
   reference: '',
   url: '',
+  pdf_availability: false,
 });
 
 // Watch for caseData changes to populate form
@@ -76,6 +82,7 @@ watch(() => props.caseData, (newData) => {
       ponente: newData.ponente || '',
       reference: newData.reference || '',
       url: newData.url || '',
+      pdf_availability: newData.pdf_availability || false,
     };
   }
 }, { immediate: true });
@@ -84,42 +91,46 @@ const updateCase = async () => {
   errors.value = {};
   processing.value = true;
 
-  const promise = axios.post(
-    `/api/jurisprudence/${props.caseData.id}`,
-    {
-      gr_number: formData.value.gr_number,
-      date: formData.value.date,
-      citation: formData.value.citation,
-      ponente: formData.value.ponente,
-      reference: formData.value.reference,
-      url: formData.value.url,
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+  try {
+    const response = await axios.post(
+      `/api/jurisprudence/${props.caseData.id}`,
+      {
+        gr_number: formData.value.gr_number,
+        date: formData.value.date,
+        citation: formData.value.citation,
+        ponente: formData.value.ponente,
+        reference: formData.value.reference,
+        url: formData.value.url,
+        pdf_availability: formData.value.pdf_availability,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
       }
-    }
-  );
+    );
 
-  toast.promise(promise, {
-    loading: 'Updating case...',
-    success: () => {
+    if (response.data.success) {
+      toast.success('Case updated successfully!');
       emit('update:open', false);
       emit('saved');
-      return 'Case updated successfully!';
-    },
-    error: (err: AxiosError<ErrorResponse>) => {
-      if (err.response?.data?.errors) {
-        errors.value = err.response.data.errors;
-        return 'Please check the form for errors';
-      }
-      return err.response?.data?.message || 'Failed to update case';
-    },
-    finally: () => {
-      processing.value = false;
+    } else {
+      throw new Error(response.data.message || 'Failed to update case');
     }
-  });
+  } catch (error: any) {
+    console.error('Error updating case:', error);
+    
+    if (error.response?.data?.errors) {
+      errors.value = error.response.data.errors;
+      toast.error('Please check the form for errors');
+    } else {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update case';
+      toast.error(errorMessage);
+    }
+  } finally {
+    processing.value = false;
+  }
 };
 
 const closeDialog = () => {
@@ -204,6 +215,18 @@ const closeDialog = () => {
             placeholder="https://..." 
             :disabled="processing"
           />
+        </div>
+
+        <!-- PDF Availability Checkbox -->
+        <div class="flex items-center space-x-2 pt-2">
+          <Checkbox
+            id="pdf_availability"
+            v-model:checked="formData.pdf_availability"
+            :disabled="processing"
+          />
+          <Label for="pdf_availability" class="cursor-pointer">
+            PDF Available
+          </Label>
         </div>
       </div>
 

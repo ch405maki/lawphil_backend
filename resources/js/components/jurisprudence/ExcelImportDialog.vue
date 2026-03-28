@@ -103,28 +103,6 @@ const handleDrop = (e: DragEvent) => {
   }
 };
 
-// Download template
-const downloadTemplate = async () => {
-  try {
-    const response = await axios.get('/api/v1/jurisprudence/import/template', {
-      responseType: 'blob'
-    });
-    
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'jurisprudence_template.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    
-  } catch (error) {
-    console.error('Template download failed:', error);
-    alert('Failed to download template');
-  }
-};
-
 // Upload file
 const uploadFile = async () => {
   if (!file.value) {
@@ -357,7 +335,6 @@ const closeDialog = () => {
           <!-- Success Alert -->
           <div v-if="uploadResult.success">
             <Alert variant="default" class="border-green-500 bg-green-50">
-              <CheckCircle class="h-4 w-4 text-green-600" />
               <AlertTitle class="text-green-800 font-semibold">Import Successful!</AlertTitle>
               <AlertDescription class="text-green-700">
                 <p class="mb-2">{{ uploadResult.message }}</p>
@@ -401,7 +378,6 @@ const closeDialog = () => {
           <!-- Error Alert -->
           <div v-else>
             <Alert variant="destructive">
-              <XCircle class="h-4 w-4" />
               <AlertTitle>Import Failed</AlertTitle>
               <AlertDescription>
                 <p class="mb-2 font-semibold">{{ uploadResult.message }}</p>

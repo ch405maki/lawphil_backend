@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Jurisprudence;
-use App\Imports\JurisprudenceImport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 
@@ -44,52 +44,121 @@ class JurisprudenceController extends Controller
         }
     }
 
-    public function update(Request $request, $id) 
+    public function store(Request $request)
     {
-        $record = Jurisprudence::findOrFail($id);
+        try {
+            $validator = Validator::make($request->all(), [
+                'gr_number' => 'required|string|max:255',
+                'date' => 'required|date',
+                'citation' => 'nullable|string',
+                'ponente' => 'nullable|string',
+                'reference' => 'nullable|string',
+                'url' => 'nullable|string',
+                'pdf_availability' => 'nullable|boolean',
+                'subject' => 'nullable|string',
+            ]);
 
-        $request->validate([
-            'gr_number' => 'required|string',
-            'date'      => 'required|date',
-            'citation'  => 'required|string',
-            'pdf_file'  => 'nullable|mimes:pdf|max:15360', 
-        ]);
-
-        $data = $request->only(['gr_number', 'date', 'citation', 'ponente', 'reference', 'url']);
-
-        if ($request->hasFile('pdf_file')) {
-            if ($record->pdf_path) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $record->pdf_path));
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
             }
 
-            $path = $request->file('pdf_file')->store('jurisprudence_pdfs', 'public');
-            $data['pdf_path'] = '/storage/' . $path;
-            $data['pdf_availability'] = true;
+            $jurisprudence = Jurisprudence::create([
+                'user_id' => 1,
+                'gr_number' => $request->gr_number,
+                'date' => $request->date,
+                'citation' => $request->citation,
+                'ponente' => $request->ponente,
+                'reference' => $request->reference,
+                'url' => $request->url,
+                'pdf_availability' => $request->pdf_availability ?? false,
+                'subject' => $request->subject,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jurisprudence record created successfully',
+                'data' => $jurisprudence
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create record: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        $record->update($data);
+    public function update(Request $request, $id) 
+    {
+        try {
+            $record = Jurisprudence::findOrFail($id);
 
-        return response()->json($record);
+            $validator = Validator::make($request->all(), [
+                'gr_number' => 'sometimes|required|string|max:255',
+                'date' => 'sometimes|required|date',
+                'citation' => 'nullable|string',
+                'ponente' => 'nullable|string',
+                'reference' => 'nullable|string',
+                'url' => 'nullable|string',
+                'pdf_availability' => 'nullable|boolean',
+                'subject' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $data = $request->only([
+                'gr_number', 
+                'date', 
+                'citation', 
+                'ponente', 
+                'reference', 
+                'url',
+                'pdf_availability',
+                'subject'
+            ]);
+
+            $record->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jurisprudence record updated successfully',
+                'data' => $record
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update record: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy($id) 
     {
-        $record = Jurisprudence::findOrFail($id);
-        if ($record->pdf_path) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $record->pdf_path));
-        }
-        $record->delete();
-        return response()->json(['status' => 'deleted']);
-    }
-
-    public function import(Request $request)
-    {
-        $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
         try {
-            Excel::import(new JurisprudenceImport, $request->file('file'));
-            return response()->json(['message' => 'Import Successful']);
+            $record = Jurisprudence::findOrFail($id);
+            $record->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Jurisprudence record deleted successfully'
+            ]);
+            
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete record: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -5,15 +5,14 @@ import { Head } from '@inertiajs/vue3';
 import { ArrowUpRightIcon, TriangleAlert, Upload, Download } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
+import CreateJurisprudenceForm from '@/components/jurisprudence/CreateJurisprudenceForm.vue';
 import Info from '@/components/jurisprudence/Info.vue';
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import axios from 'axios';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -34,13 +33,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 // Handle successful import
 const handleImportSuccess = (data: any) => {
     console.log('Import successful:', data);
-    // You can add additional logic here, like refreshing a list
 };
 
 // Handle import error
 const handleImportError = (error: any) => {
     console.error('Import error:', error);
-    // You can add additional error handling here
 };
 
 // Download template
@@ -75,66 +72,48 @@ const downloadTemplate = async () => {
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Import Jurisprudence</h1>
+                        <h1 class="text-2xl font-bold tracking-tight">Create Jurisprudence Record</h1>
                         <p class="text-muted-foreground">
-                            Bulk import jurisprudence records from Excel files. Download the template to get started.
+                            Create a new jurisprudence record manually.
                         </p>
                     </div>
                     
-                    <!-- Info Component -->
-                    <Info />
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3 mt-2">
+                        <Info />
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button 
+                                    variant="outline" 
+                                    size="icon"
+                                    @click="downloadTemplate"
+                                >
+                                    <Download />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Download Template</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        <ExcelImportDialog 
+                            trigger-text="Import Excel"
+                            :trigger-icon="Upload"
+                            @import-success="handleImportSuccess"
+                            @import-error="handleImportError"
+                        />
+                        
+                    </div>
                 </div>
                 
-                <!-- Action Buttons -->
-                <div class="flex gap-3 mt-2">
-                    <ExcelImportDialog 
-                        trigger-text="Import Excel"
-                        trigger-variant="default"
-                        :trigger-icon="Upload"
-                        @import-success="handleImportSuccess"
-                        @import-error="handleImportError"
-                    />
-                    
-                    <Button 
-                        variant="outline" 
-                        @click="downloadTemplate"
-                        class="gap-2"
-                    >
-                        <Download class="h-4 w-4" />
-                        Download Template
-                    </Button>
-                </div>
+                
             </div>
             
-            <!-- Empty State for Other Features -->
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <TriangleAlert />
-                    </EmptyMedia>
-
-                    <EmptyTitle>Additional Features Coming Soon</EmptyTitle>
-
-                    <EmptyDescription>
-                        More import options and batch operations are currently under development.
-                    </EmptyDescription>
-                </EmptyHeader>
-
-                <EmptyContent>
-                    <div class="flex gap-2">
-                        <Button disabled>Coming Soon</Button>
-                        <Button variant="outline" disabled>
-                            Under Development
-                        </Button>
-                    </div>
-                </EmptyContent>
-
-                <Button variant="link" as-child class="text-muted-foreground" size="sm">
-                    <a href="#">
-                        View Development Updates <ArrowUpRightIcon />
-                    </a>
-                </Button>
-            </Empty>
+            <!-- Manual Creation Form -->
+            <div>
+                <CreateJurisprudenceForm />
+            </div>
         </div>
     </AppLayout>
 </template>
