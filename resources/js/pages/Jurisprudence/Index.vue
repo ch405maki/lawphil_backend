@@ -24,7 +24,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Custom Components
@@ -38,8 +37,8 @@ import {
   FileSpreadsheet,
   Plus,
   Trash2,
-  Pencil,
-  ExternalLink,
+  SquarePen,
+  SquareArrowOutUpRight,
   FileText,
   RefreshCw,
   ChevronLeft,
@@ -317,25 +316,35 @@ onMounted(() => {
                                         Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
                                     </div>
                                 </TableCell>
+
+                                <!-- https://lawphil.net/judjuris/juri2025/sep2025/gr_02219_2025.html -->
                                 <TableCell class="text-center">
-                                    <a v-if="item.url" :href="item.url" target="_blank" class="inline-flex items-center gap-1 text-primary hover:underline text-sm">
-                                        Link <ExternalLink class="h-3 w-3" />
+                                    <a 
+                                        v-if="item.url" 
+                                        :href="item.url.startsWith('http') ? item.url : `https://lawphil.net/judjuris/${item.url}`" 
+                                        target="_blank" 
+                                        class="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                                    >
+                                        Link<SquareArrowOutUpRight class="h-3 w-3" />
                                     </a>
                                     <span v-else class="text-muted-foreground">—</span>
                                 </TableCell>
+
+                                <!-- https://lawphil.net/judjuris/juri2025/sep2025/pdf/gr_02219_2025.pdf -->
                                 <TableCell class="text-center">
                                     <a v-if="item.pdf_availability" :href="item.pdf_path" target="_blank" 
-                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
                                         <FileText class="h-4 w-4" />
                                     </a>
                                     <span v-else class="text-muted-foreground">—</span>
                                 </TableCell>
+
                                 <TableCell class="text-right">
                                     <div class="flex justify-end gap-2">
-                                        <Button variant="ghost" size="sm" @click="openEdit(item)" :disabled="loading">
-                                            <Pencil class="h-4 w-4" />
+                                        <Button variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading">
+                                            <SquarePen class="h-4 w-4" />
                                         </Button>
-                                        <Button variant="ghost" size="sm" @click="confirmDelete(item.id)" :disabled="loading">
+                                        <Button variant="ghost" size="icon" @click="confirmDelete(item.id)" :disabled="loading">
                                             <Trash2 class="h-4 w-4 text-destructive" />
                                         </Button>
                                     </div>
