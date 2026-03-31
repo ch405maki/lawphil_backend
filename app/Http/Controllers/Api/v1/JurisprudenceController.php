@@ -165,4 +165,28 @@ class JurisprudenceController extends Controller
             ], 500);
         }
     }
+
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $request->validate([
+                'ids' => 'required|array',
+                'ids.*' => 'integer|exists:jurisprudence,id'
+            ]);
+
+            $deleted = Jurisprudence::whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted {$deleted} records",
+                'deleted_count' => $deleted
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete records: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

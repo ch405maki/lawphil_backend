@@ -8,6 +8,7 @@ import { Head } from '@inertiajs/vue3';
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,16 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Custom Components
 import EditCaseDialog from '@/components/jurisprudence/EditCaseDialog.vue';
@@ -44,7 +55,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Trash,
+  X
 } from 'lucide-vue-next';
 
 const breadcrumbs = [ 
@@ -69,6 +82,11 @@ const deleteId = ref<number | null>(null);
 const loading = ref(false);
 const searchLoading = ref(false);
 
+// Multiple deletion state
+const selectedIds = ref<number[]>([]);
+const showBulkDeleteDialog = ref(false);
+const bulkDeleting = ref(false);
+
 const filterState = reactive({ 
     year: '', 
     sort: 'latest',
@@ -85,6 +103,15 @@ const currentCase = ref({
     url: '',
     pdf_availability: false,
     pdf_path: ''
+});
+
+// Computed properties for multiple deletion
+const isAllSelected = computed(() => {
+  return cases.value.data?.length > 0 && selectedIds.value.length === cases.value.data?.length;
+});
+
+const isSomeSelected = computed(() => {
+  return selectedIds.value.length > 0 && selectedIds.value.length < cases.value.data?.length;
 });
 
 // Debounce function for search
@@ -128,6 +155,8 @@ const fetchData = async (page = 1) => {
     });
     
     cases.value = response.data;
+    // Clear selections when data changes
+    selectedIds.value = [];
   } catch (error) {
     console.error('Error fetching data:', error);
     toast.error('Failed to fetch jurisprudence data');
@@ -159,6 +188,54 @@ const openEdit = (item: any) => {
 const confirmDelete = (id: number) => {
     deleteId.value = id;
     showDeleteDialog.value = true;
+};
+
+// Multiple selection handlers
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = [];
+  } else {
+    selectedIds.value = cases.value.data.map((item: any) => item.id);
+  }
+};
+
+const toggleSelect = (id: number) => {
+  const index = selectedIds.value.indexOf(id);
+  if (index > -1) {
+    selectedIds.value.splice(index, 1);
+  } else {
+    selectedIds.value.push(id);
+  }
+};
+
+// Bulk delete handler
+const bulkDelete = async () => {
+  bulkDeleting.value = true;
+  
+  try {
+    const response = await axios.post('/api/jurisprudence/bulk-delete', {
+      ids: selectedIds.value
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      }
+    });
+
+    if (response.data.success) {
+      toast.success(`Successfully deleted ${selectedIds.value.length} record(s)`);
+      showBulkDeleteDialog.value = false;
+      selectedIds.value = [];
+      fetchData(cases.value.current_page);
+    } else {
+      throw new Error(response.data.message || 'Failed to delete records');
+    }
+  } catch (error: any) {
+    console.error('Error bulk deleting:', error);
+    toast.error(error.response?.data?.message || error.message || 'Failed to delete records');
+  } finally {
+    bulkDeleting.value = false;
+  }
 };
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
@@ -215,55 +292,89 @@ onMounted(() => {
             <Card>
                 <CardContent class="p-0">
                     <!-- Filters -->
-                    <div class="flex flex-wrap items-center justify-end gap-3 p-4">
-                        <div class="relative flex-1 min-w-[200px] max-w-[320px]">
-                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                <Search v-if="!searchLoading" class="h-4 w-4 text-muted-foreground" />
-                                <Loader2 v-else class="h-4 w-4 animate-spin text-primary" />
-                            </div>
-                            <Input 
-                                v-model="search" 
-                                @input="handleSearch"
-                                placeholder="Search G.R. No. or Case Title..." 
-                                class="pl-9"
-                                :disabled="loading"
-                            />
+                    <div class="flex flex-wrap items-center justify-between gap-3 p-4">
+                        <div class="flex items-center gap-2">
+                            <!-- Bulk Delete Button -->
+                            <Button 
+                                v-if="selectedIds.length > 0"
+                                variant="destructive" 
+                                size="sm"
+                                @click="showBulkDeleteDialog = true"
+                                class="gap-2"
+                            >
+                                <Trash class="h-4 w-4" />
+                                Delete Selected ({{ selectedIds.length }})
+                            </Button>
+                            <Button 
+                                v-if="selectedIds.length > 0"
+                                variant="ghost" 
+                                size="sm"
+                                @click="selectedIds = []"
+                                class="gap-2"
+                            >
+                                <X class="h-4 w-4" />
+                                Clear
+                            </Button>
                         </div>
                         
-                        <Select v-model="filterState.sort" :disabled="loading">
-                            <SelectTrigger class="w-[130px]">
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="latest">Newest First</SelectItem>
-                                <SelectItem value="oldest">Oldest First</SelectItem>
-                                <SelectItem value="az">A-Z (Title)</SelectItem>
-                                <SelectItem value="za">Z-A (Title)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        
-                        <Input 
-                            v-model="filterState.year" 
-                            type="number" 
-                            placeholder="Year" 
-                            class="w-24"
-                            :disabled="loading"
-                        />
-                        
-                        <Button 
-                            variant="ghost" 
-                            @click="resetFilters"
-                            class="gap-1"
-                            :disabled="loading"
-                        >
-                            <RefreshCw class="h-4 w-4" />
-                            <span class="hidden sm:inline">Reset</span>
-                        </Button>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative flex-1 min-w-[200px] max-w-[320px]">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <Search v-if="!searchLoading" class="h-4 w-4 text-muted-foreground" />
+                                    <Loader2 v-else class="h-4 w-4 animate-spin text-primary" />
+                                </div>
+                                <Input 
+                                    v-model="search" 
+                                    @input="handleSearch"
+                                    placeholder="Search G.R. No. or Case Title..." 
+                                    class="pl-9"
+                                    :disabled="loading"
+                                />
+                            </div>
+                            
+                            <Select v-model="filterState.sort" :disabled="loading">
+                                <SelectTrigger class="w-[130px]">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="latest">Newest First</SelectItem>
+                                    <SelectItem value="oldest">Oldest First</SelectItem>
+                                    <SelectItem value="az">A-Z (Title)</SelectItem>
+                                    <SelectItem value="za">Z-A (Title)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            
+                            <Input 
+                                v-model="filterState.year" 
+                                type="number" 
+                                placeholder="Year" 
+                                class="w-24"
+                                :disabled="loading"
+                            />
+                            
+                            <Button 
+                                variant="ghost" 
+                                @click="resetFilters"
+                                class="gap-1"
+                                :disabled="loading"
+                            >
+                                <RefreshCw class="h-4 w-4" />
+                                <span class="hidden sm:inline">Reset</span>
+                            </Button>
+                        </div>
                     </div>
                     
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead class="w-12">
+                                    <Checkbox 
+                                        :checked="isAllSelected"
+                                        :indeterminate="isSomeSelected"
+                                        @click="toggleSelectAll"
+                                        :disabled="loading || cases.data?.length === 0"
+                                    />
+                                </TableHead>
                                 <TableHead class="w-[15%]">G.R. & Date</TableHead>
                                 <TableHead class="w-[40%]">Case Title</TableHead>
                                 <TableHead class="w-[15%] text-center">Reference</TableHead>
@@ -275,6 +386,7 @@ onMounted(() => {
                             <!-- Skeleton loading rows -->
                             <template v-if="loading && cases.data?.length === 0">
                                 <TableRow v-for="i in 5" :key="i">
+                                    <TableCell><Skeleton class="h-4 w-4" /></TableCell>
                                     <TableCell>
                                         <div class="space-y-2">
                                             <Skeleton class="h-5 w-24" />
@@ -305,6 +417,13 @@ onMounted(() => {
                             <!-- Actual data rows -->
                             <TableRow v-for="item in cases.data" :key="item.id" class="group">
                                 <TableCell>
+                                    <Checkbox 
+                                        :checked="selectedIds.includes(item.id)"
+                                        @click="toggleSelect(item.id)"
+                                        :disabled="loading"
+                                    />
+                                </TableCell>
+                                <TableCell>
                                     <div class="font-semibold">{{ item.gr_number }}</div>
                                     <div class="text-xs text-muted-foreground mt-1">{{ formatDate(item.date) }}</div>
                                 </TableCell>
@@ -316,8 +435,6 @@ onMounted(() => {
                                         Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
                                     </div>
                                 </TableCell>
-
-                                <!-- https://lawphil.net/judjuris/juri2025/sep2025/gr_02219_2025.html -->
                                 <TableCell class="text-center">
                                     <a 
                                         v-if="item.url" 
@@ -329,8 +446,6 @@ onMounted(() => {
                                     </a>
                                     <span v-else class="text-muted-foreground">—</span>
                                 </TableCell>
-
-                                <!-- https://lawphil.net/judjuris/juri2025/sep2025/pdf/gr_02219_2025.pdf -->
                                 <TableCell class="text-center">
                                     <a v-if="item.pdf_availability" :href="item.pdf_path" target="_blank" 
                                         class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
@@ -338,7 +453,6 @@ onMounted(() => {
                                     </a>
                                     <span v-else class="text-muted-foreground">—</span>
                                 </TableCell>
-
                                 <TableCell class="text-right">
                                     <div class="flex justify-end gap-2">
                                         <Button variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading">
@@ -351,7 +465,7 @@ onMounted(() => {
                                 </TableCell>
                             </TableRow>
                             <TableRow v-if="cases.data?.length === 0 && !loading">
-                                <TableCell colspan="5" class="text-center py-8">
+                                <TableCell colspan="6" class="text-center py-8">
                                     <div class="flex flex-col items-center gap-2">
                                         <AlertCircle class="h-8 w-8 text-muted-foreground" />
                                         <p class="text-muted-foreground">No cases found</p>
@@ -434,5 +548,29 @@ onMounted(() => {
             :case-id="deleteId"
             @deleted="refreshData"
         />
+
+        <!-- Bulk Delete Confirmation Dialog -->
+        <AlertDialog v-model:open="showBulkDeleteDialog">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete 
+                        <strong>{{ selectedIds.length }}</strong> selected record(s) from the system.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel :disabled="bulkDeleting">Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        @click="bulkDelete" 
+                        class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        :disabled="bulkDeleting"
+                    >
+                        <Loader2 v-if="bulkDeleting" class="h-4 w-4 mr-2 animate-spin" />
+                        {{ bulkDeleting ? 'Deleting...' : 'Delete All' }}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </AppLayout>
 </template>
