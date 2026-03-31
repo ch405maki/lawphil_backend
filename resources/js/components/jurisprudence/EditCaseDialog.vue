@@ -32,6 +32,8 @@ interface CaseData {
   reference: string;
   url: string;
   pdf_availability?: boolean;
+  subject: string;
+  pdf_path: string;
 }
 
 interface ValidationErrors {
@@ -42,6 +44,8 @@ interface ValidationErrors {
   reference?: string[];
   url?: string[];
   pdf_availability?: string[];
+  subject?: string[];
+  pdf_path?: string[];
 }
 
 interface ErrorResponse {
@@ -70,6 +74,8 @@ const formData = ref({
   reference: '',
   url: '',
   pdf_availability: false,
+  subject: '',
+  pdf_path: '',
 });
 
 // Watch for caseData changes to populate form
@@ -83,6 +89,8 @@ watch(() => props.caseData, (newData) => {
       reference: newData.reference || '',
       url: newData.url || '',
       pdf_availability: newData.pdf_availability || false,
+      subject: newData.subject || '',
+      pdf_path: newData.pdf_path || '',
     };
   }
 }, { immediate: true });
@@ -102,6 +110,8 @@ const updateCase = async () => {
         reference: formData.value.reference,
         url: formData.value.url,
         pdf_availability: formData.value.pdf_availability,
+        subject: formData.value.subject,
+        pdf_path: formData.value.pdf_path,
       },
       {
         headers: {
@@ -217,16 +227,45 @@ const closeDialog = () => {
           />
         </div>
 
-        <!-- PDF Availability Checkbox -->
-        <div class="flex items-center space-x-2 pt-2">
-          <Checkbox
-            id="pdf_availability"
-            v-model:checked="formData.pdf_availability"
+        <!-- Subject Field -->
+        <div class="space-y-2">
+          <Label for="subject">Subject</Label>
+          <Textarea 
+            id="subject" 
+            v-model="formData.subject" 
+            :class="{'border-destructive': errors.subject}" 
+            rows="2"
+            placeholder="Enter the subject or topic of the case"
             :disabled="processing"
           />
-          <Label for="pdf_availability" class="cursor-pointer">
-            PDF Available
-          </Label>
+          <p v-if="errors.subject" class="text-xs text-destructive">{{ errors.subject[0] }}</p>
+        </div>
+
+        <!-- PDF Availability Checkbox -->
+        <div class="flex items-start gap-4">
+          <div class="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="pdf_availability"
+              v-model:checked="formData.pdf_availability"
+              :disabled="processing"
+            />
+            <Label for="pdf_availability" class="cursor-pointer whitespace-nowrap">
+              PDF Available
+            </Label>
+          </div>
+          
+          <div class="flex-1">
+            <Input 
+              id="pdf_path" 
+              v-model="formData.pdf_path" 
+              type="text"
+              placeholder="Enter PDF path or URL"
+              :class="{'border-destructive': errors.pdf_path}" 
+              :disabled="processing || !formData.pdf_availability"
+              class="w-full"
+            />
+            <p v-if="errors.pdf_path" class="text-xs text-destructive mt-1">{{ errors.pdf_path[0] }}</p>
+          </div>
         </div>
       </div>
 

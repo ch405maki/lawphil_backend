@@ -56,6 +56,7 @@ class JurisprudenceController extends Controller
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
                 'subject' => 'nullable|string',
+                'pdf_path' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -76,6 +77,7 @@ class JurisprudenceController extends Controller
                 'url' => $request->url,
                 'pdf_availability' => $request->pdf_availability ?? false,
                 'subject' => $request->subject,
+                'pdf_path' => $request->pdf_path,
             ]);
 
             return response()->json([
@@ -106,6 +108,7 @@ class JurisprudenceController extends Controller
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
                 'subject' => 'nullable|string',
+                'pdf_path' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -124,7 +127,8 @@ class JurisprudenceController extends Controller
                 'reference', 
                 'url',
                 'pdf_availability',
-                'subject'
+                'subject',
+                'pdf_path'
             ]);
 
             $record->update($data);
