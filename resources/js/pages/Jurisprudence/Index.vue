@@ -81,6 +81,7 @@ const showDeleteDialog = ref(false);
 const deleteId = ref<number | null>(null);
 const loading = ref(false);
 const searchLoading = ref(false);
+const isSearching = ref(false);
 
 // Multiple deletion state
 const selectedIds = ref<number[]>([]);
@@ -114,13 +115,25 @@ const isSomeSelected = computed(() => {
   return selectedIds.value.length > 0 && selectedIds.value.length < cases.value.data?.length;
 });
 
-// Debounce function for search
+// Debounce function for search - with request cancellation
 let searchTimeout: ReturnType<typeof setTimeout>;
+let currentAbortController: AbortController | null = null;
+
 const handleSearch = () => {
+  isSearching.value = true;
   searchLoading.value = true;
+  
   if (searchTimeout) clearTimeout(searchTimeout);
+  
+  // Cancel previous request
+  if (currentAbortController) {
+    currentAbortController.abort();
+  }
+  
   searchTimeout = setTimeout(() => {
-    fetchData(1);
+    // Create new abort controller for this request
+    currentAbortController = new AbortController();
+    fetchData(1, currentAbortController.signal);
   }, 500);
 };
 
@@ -140,8 +153,11 @@ const pageNumbers = computed(() => {
     return range;
 });
 
-const fetchData = async (page = 1) => {
-  loading.value = true;
+const fetchData = async (page = 1, signal?: AbortSignal) => {
+  // Don't show full table loading for search, just keep search loading indicator
+  if (!signal) {
+    loading.value = true;
+  }
   
   try {
     const response = await axios.get('/api/jurisprudence', {
@@ -151,18 +167,25 @@ const fetchData = async (page = 1) => {
         year: filterState.year,
         sort: filterState.sort,
         rows: filterState.rows
-      }
+      },
+      signal: signal
     });
     
     cases.value = response.data;
     // Clear selections when data changes
     selectedIds.value = [];
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    toast.error('Failed to fetch jurisprudence data');
+  } catch (error: any) {
+    // Ignore abort errors
+    if (error.name !== 'AbortError' && error.code !== 'ERR_CANCELED') {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch jurisprudence data');
+    }
   } finally {
-    loading.value = false;
+    if (!signal) {
+      loading.value = false;
+    }
     searchLoading.value = false;
+    isSearching.value = false;
   }
 };
 
@@ -178,7 +201,14 @@ const handleImportError = (error: any) => {
 };
 
 // Watch for filter changes
-watch([() => filterState.year, () => filterState.sort, () => filterState.rows], () => fetchData(1));
+watch([() => filterState.year, () => filterState.sort, () => filterState.rows], () => {
+  // Cancel previous request
+  if (currentAbortController) {
+    currentAbortController.abort();
+  }
+  currentAbortController = new AbortController();
+  fetchData(1, currentAbortController.signal);
+});
 
 const openEdit = (item: any) => {
     currentCase.value = { ...item };
@@ -251,7 +281,12 @@ const goToCreate = () => {
 const resetFilters = () => {
   Object.assign(filterState, {year: '', sort: 'latest', rows: 10});
   search.value = '';
-  fetchData(1);
+  // Cancel previous request
+  if (currentAbortController) {
+    currentAbortController.abort();
+  }
+  currentAbortController = new AbortController();
+  fetchData(1, currentAbortController.signal);
 };
 
 // Initial data fetch
@@ -328,11 +363,10 @@ onMounted(() => {
                                     @input="handleSearch"
                                     placeholder="Search G.R. No. or Case Title..." 
                                     class="pl-9"
-                                    :disabled="loading"
                                 />
                             </div>
                             
-                            <Select v-model="filterState.sort" :disabled="loading">
+                            <Select v-model="filterState.sort" :disabled="searchLoading">
                                 <SelectTrigger class="w-[130px]">
                                     <SelectValue placeholder="Sort by" />
                                 </SelectTrigger>
@@ -349,14 +383,14 @@ onMounted(() => {
                                 type="number" 
                                 placeholder="Year" 
                                 class="w-24"
-                                :disabled="loading"
+                                :disabled="searchLoading"
                             />
                             
                             <Button 
                                 variant="ghost" 
                                 @click="resetFilters"
                                 class="gap-1"
-                                :disabled="loading"
+                                :disabled="searchLoading"
                             >
                                 <RefreshCw class="h-4 w-4" />
                                 <span class="hidden sm:inline">Reset</span>
