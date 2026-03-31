@@ -85,6 +85,8 @@ const isSearching = ref(false);
 
 // Multiple deletion state
 const selectedIds = ref<number[]>([]);
+const selectAllAcrossPages = ref(false);
+const totalFiltered = ref(0);
 const showBulkDeleteDialog = ref(false);
 const bulkDeleting = ref(false);
 
@@ -107,12 +109,19 @@ const currentCase = ref({
 });
 
 // Computed properties for multiple deletion
-const isAllSelected = computed(() => {
+const isAllSelectedOnPage = computed(() => {
   return cases.value.data?.length > 0 && selectedIds.value.length === cases.value.data?.length;
 });
 
 const isSomeSelected = computed(() => {
   return selectedIds.value.length > 0 && selectedIds.value.length < cases.value.data?.length;
+});
+
+const selectedCountText = computed(() => {
+  if (selectAllAcrossPages.value) {
+    return `All ${totalFiltered.value} records`;
+  }
+  return `${selectedIds.value.length} record(s)`;
 });
 
 // Debounce function for search - with request cancellation
@@ -172,8 +181,12 @@ const fetchData = async (page = 1, signal?: AbortSignal) => {
     });
     
     cases.value = response.data;
-    // Clear selections when data changes
-    selectedIds.value = [];
+    totalFiltered.value = response.data.total;
+    
+    // Clear selections when data changes (unless select all across pages is active)
+    if (!selectAllAcrossPages.value) {
+      selectedIds.value = [];
+    }
   } catch (error: any) {
     // Ignore abort errors
     if (error.name !== 'AbortError' && error.code !== 'ERR_CANCELED') {
@@ -192,7 +205,9 @@ const fetchData = async (page = 1, signal?: AbortSignal) => {
 // Handle successful import
 const handleImportSuccess = (data: any) => {
     toast.success(`Import successful! ${data.imported} records imported.`);
-    fetchData(); // Refresh the data after import
+    selectAllAcrossPages.value = false;
+    selectedIds.value = [];
+    fetchData();
 };
 
 // Handle import error
@@ -202,6 +217,8 @@ const handleImportError = (error: any) => {
 
 // Watch for filter changes
 watch([() => filterState.year, () => filterState.sort, () => filterState.rows], () => {
+  selectAllAcrossPages.value = false;
+  selectedIds.value = [];
   // Cancel previous request
   if (currentAbortController) {
     currentAbortController.abort();
@@ -221,15 +238,38 @@ const confirmDelete = (id: number) => {
 };
 
 // Multiple selection handlers
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
+const toggleSelectAllOnPage = () => {
+  if (isAllSelectedOnPage.value) {
+    // If all on page are selected, deselect them
+    selectedIds.value = selectedIds.value.filter(id => 
+      !cases.value.data.some((item: any) => item.id === id)
+    );
+  } else {
+    // Add all items on current page to selection
+    const pageIds = cases.value.data.map((item: any) => item.id);
+    const newIds = [...new Set([...selectedIds.value, ...pageIds])];
+    selectedIds.value = newIds;
+  }
+  selectAllAcrossPages.value = false;
+};
+
+const toggleSelectAllAcrossPages = () => {
+  selectAllAcrossPages.value = !selectAllAcrossPages.value;
+  if (selectAllAcrossPages.value) {
+    // When selecting all across pages, clear individual selections
     selectedIds.value = [];
   } else {
-    selectedIds.value = cases.value.data.map((item: any) => item.id);
+    // When deselecting all across pages, clear all selections
+    selectedIds.value = [];
   }
 };
 
 const toggleSelect = (id: number) => {
+  if (selectAllAcrossPages.value) {
+    // If select all across pages is active, disable it
+    selectAllAcrossPages.value = false;
+  }
+  
   const index = selectedIds.value.indexOf(id);
   if (index > -1) {
     selectedIds.value.splice(index, 1);
@@ -243,18 +283,40 @@ const bulkDelete = async () => {
   bulkDeleting.value = true;
   
   try {
-    const response = await axios.post('/api/jurisprudence/bulk-delete', {
-      ids: selectedIds.value
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      }
-    });
+    let response;
+    
+    if (selectAllAcrossPages.value) {
+      // Delete all records matching current filters
+      response = await axios.post('/api/jurisprudence/bulk-delete', {
+        select_all: true,
+        filters: {
+          search: search.value,
+          year: filterState.year,
+          sort: filterState.sort
+        }
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+    } else {
+      // Delete only selected records
+      response = await axios.post('/api/jurisprudence/bulk-delete', {
+        ids: selectedIds.value,
+        select_all: false
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
+    }
 
     if (response.data.success) {
-      toast.success(`Successfully deleted ${selectedIds.value.length} record(s)`);
+      toast.success(`Successfully deleted ${response.data.deleted_count} record(s)`);
       showBulkDeleteDialog.value = false;
+      selectAllAcrossPages.value = false;
       selectedIds.value = [];
       fetchData(cases.value.current_page);
     } else {
@@ -271,6 +333,8 @@ const bulkDelete = async () => {
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
 
 const refreshData = () => {
+    selectAllAcrossPages.value = false;
+    selectedIds.value = [];
     fetchData(cases.value.current_page);
 };
 
@@ -281,6 +345,8 @@ const goToCreate = () => {
 const resetFilters = () => {
   Object.assign(filterState, {year: '', sort: 'latest', rows: 10});
   search.value = '';
+  selectAllAcrossPages.value = false;
+  selectedIds.value = [];
   // Cancel previous request
   if (currentAbortController) {
     currentAbortController.abort();
@@ -331,20 +397,20 @@ onMounted(() => {
                         <div class="flex items-center gap-2">
                             <!-- Bulk Delete Button -->
                             <Button 
-                                v-if="selectedIds.length > 0"
+                                v-if="selectedIds.length > 0 || selectAllAcrossPages"
                                 variant="destructive" 
                                 size="sm"
                                 @click="showBulkDeleteDialog = true"
                                 class="gap-2"
                             >
                                 <Trash class="h-4 w-4" />
-                                Delete Selected ({{ selectedIds.length }})
+                                Delete Selected ({{ selectedCountText }})
                             </Button>
                             <Button 
-                                v-if="selectedIds.length > 0"
+                                v-if="selectedIds.length > 0 || selectAllAcrossPages"
                                 variant="ghost" 
                                 size="sm"
-                                @click="selectedIds = []"
+                                @click="() => { selectedIds = []; selectAllAcrossPages = false; }"
                                 class="gap-2"
                             >
                                 <X class="h-4 w-4" />
@@ -402,12 +468,25 @@ onMounted(() => {
                         <TableHeader>
                             <TableRow>
                                 <TableHead class="w-12">
-                                    <Checkbox 
-                                        :checked="isAllSelected"
-                                        :indeterminate="isSomeSelected"
-                                        @click="toggleSelectAll"
-                                        :disabled="loading || cases.data?.length === 0"
-                                    />
+                                    <div class="flex flex-col gap-1">
+                                        <Checkbox 
+                                            :checked="isAllSelectedOnPage && !selectAllAcrossPages"
+                                            :indeterminate="isSomeSelected && !selectAllAcrossPages"
+                                            @click="toggleSelectAllOnPage"
+                                            :disabled="loading || cases.data?.length === 0"
+                                        />
+                                        <span class="text-xs font-normal">Page</span>
+                                    </div>
+                                </TableHead>
+                                <TableHead class="w-12">
+                                    <div class="flex flex-col gap-1">
+                                        <Checkbox 
+                                            :checked="selectAllAcrossPages"
+                                            @click="toggleSelectAllAcrossPages"
+                                            :disabled="loading || totalFiltered === 0"
+                                        />
+                                        <span class="text-xs font-normal">All</span>
+                                    </div>
                                 </TableHead>
                                 <TableHead class="w-[15%]">G.R. & Date</TableHead>
                                 <TableHead class="w-[40%]">Case Title</TableHead>
@@ -420,6 +499,7 @@ onMounted(() => {
                             <!-- Skeleton loading rows -->
                             <template v-if="loading && cases.data?.length === 0">
                                 <TableRow v-for="i in 5" :key="i">
+                                    <TableCell><Skeleton class="h-4 w-4" /></TableCell>
                                     <TableCell><Skeleton class="h-4 w-4" /></TableCell>
                                     <TableCell>
                                         <div class="space-y-2">
@@ -454,9 +534,10 @@ onMounted(() => {
                                     <Checkbox 
                                         :checked="selectedIds.includes(item.id)"
                                         @click="toggleSelect(item.id)"
-                                        :disabled="loading"
+                                        :disabled="loading || selectAllAcrossPages"
                                     />
                                 </TableCell>
+                                <TableCell></TableCell>
                                 <TableCell>
                                     <div class="font-semibold">{{ item.gr_number }}</div>
                                     <div class="text-xs text-muted-foreground mt-1">{{ formatDate(item.date) }}</div>
@@ -499,7 +580,7 @@ onMounted(() => {
                                 </TableCell>
                             </TableRow>
                             <TableRow v-if="cases.data?.length === 0 && !loading">
-                                <TableCell colspan="6" class="text-center py-8">
+                                <TableCell colspan="7" class="text-center py-8">
                                     <div class="flex flex-col items-center gap-2">
                                         <AlertCircle class="h-8 w-8 text-muted-foreground" />
                                         <p class="text-muted-foreground">No cases found</p>
@@ -590,7 +671,11 @@ onMounted(() => {
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
                         This action cannot be undone. This will permanently delete 
-                        <strong>{{ selectedIds.length }}</strong> selected record(s) from the system.
+                        <strong>{{ selectedCountText }}</strong> 
+                        from the system.
+                        <div v-if="selectAllAcrossPages" class="mt-2 p-2 bg-yellow-50 rounded text-yellow-800 text-sm">
+                            ⚠️ Warning: This will delete ALL {{ totalFiltered }} records matching your current filters.
+                        </div>
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
