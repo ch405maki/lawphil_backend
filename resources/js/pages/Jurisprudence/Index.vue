@@ -1,42 +1,106 @@
-<script setup>
+<script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, reactive, watch, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
+import axios from 'axios';
+import { toast } from 'vue-sonner';
+import { Head } from '@inertiajs/vue3';
 
-const props = defineProps({
-    cases: Object,
-    filters: Object
+// Shadcn UI Components
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Custom Components
+import EditCaseDialog from '@/components/jurisprudence/EditCaseDialog.vue';
+import DeleteCaseDialog from '@/components/jurisprudence/DeleteCaseDialog.vue';
+import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
+
+// Icons
+import {
+  Search,
+  FileSpreadsheet,
+  Plus,
+  Trash2,
+  SquarePen,
+  SquareArrowOutUpRight,
+  FileText,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  AlertCircle
+} from 'lucide-vue-next';
+
+const breadcrumbs = [ 
+  { title: "Dashboard", href: "/dashboard" }, 
+  { title: "Jurisprudence", href: "#" }
+];
+
+// Data state
+const cases = ref<any>({
+  data: [],
+  current_page: 1,
+  last_page: 1,
+  from: 0,
+  to: 0,
+  total: 0
 });
 
-const search = ref(props.filters?.search || '');
-const importing = ref(false);
+const search = ref('');
 const showEditModal = ref(false);
-const pdfFile = ref(null);
-const processing = ref(false);
-const errors = ref({});
+const showDeleteDialog = ref(false);
+const deleteId = ref<number | null>(null);
+const loading = ref(false);
+const searchLoading = ref(false);
 
 const filterState = reactive({ 
-    year: props.filters?.year || '', 
-    sort: props.filters?.sort || 'latest',
-    rows: props.filters?.rows || 10
+    year: '', 
+    sort: 'latest',
+    rows: 10
 });
 
-const currentCase = reactive({ 
-    id: null, 
-    gr_number: '', 
-    date: '', 
-    citation: '', 
-    ponente: '', 
+const currentCase = ref({
+    id: null,
+    gr_number: '',
+    date: '',
+    citation: '',
+    ponente: '',
     reference: '',
     url: '',
     pdf_availability: false,
-    pdf_path: '' 
+    pdf_path: ''
 });
+
+// Debounce function for search
+let searchTimeout: ReturnType<typeof setTimeout>;
+const handleSearch = () => {
+  searchLoading.value = true;
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetchData(1);
+  }, 500);
+};
 
 // Logic for generating numbered pagination
 const pageNumbers = computed(() => {
-    const total = props.cases.last_page;
-    const current = props.cases.current_page;
+    const total = cases.value.last_page;
+    const current = cases.value.current_page;
     const delta = 2;
     const range = [];
     for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
@@ -49,307 +113,326 @@ const pageNumbers = computed(() => {
     return range;
 });
 
-const fetchData = (page = props.cases.current_page) => {
-    router.get(route('jurisprudence.index'), { 
-        search: search.value, 
+const fetchData = async (page = 1) => {
+  loading.value = true;
+  
+  try {
+    const response = await axios.get('/api/jurisprudence', {
+      params: {
+        search: search.value,
         page: page,
         year: filterState.year,
         sort: filterState.sort,
         rows: filterState.rows
-    }, {
-        preserveState: true,
-        replace: true,
-        preserveScroll: true
+      }
     });
+    
+    cases.value = response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    toast.error('Failed to fetch jurisprudence data');
+  } finally {
+    loading.value = false;
+    searchLoading.value = false;
+  }
 };
 
-const importExcel = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    importing.value = true;
-    router.post(route('jurisprudence.import'), formData, {
-        onFinish: () => {
-            importing.value = false;
-            e.target.value = '';
-        },
-        forceFormData: true
-    });
+// Handle successful import
+const handleImportSuccess = (data: any) => {
+    toast.success(`Import successful! ${data.imported} records imported.`);
+    fetchData(); // Refresh the data after import
 };
 
-// Added filterState.rows to the watcher to trigger refresh when item count changes
+// Handle import error
+const handleImportError = (error: any) => {
+    toast.error(error.message || 'Import failed. Please check your file format.');
+};
+
+// Watch for filter changes
 watch([() => filterState.year, () => filterState.sort, () => filterState.rows], () => fetchData(1));
 
-const openEdit = (item) => { 
-    errors.value = {};
-    Object.assign(currentCase, item); 
-    if (item.date) {
-        currentCase.date = new Date(item.date).toISOString().split('T')[0];
-    }
-    pdfFile.value = null; 
-    showEditModal.value = true; 
+const openEdit = (item: any) => {
+    currentCase.value = { ...item };
+    showEditModal.value = true;
 };
 
-const handlePdfChange = (e) => {
-    pdfFile.value = e.target.files[0];
+const confirmDelete = (id: number) => {
+    deleteId.value = id;
+    showDeleteDialog.value = true;
 };
 
-const updateCase = () => {
-    errors.value = {};
-    processing.value = true;
+const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
 
-    const formData = new FormData();
-    formData.append('gr_number', currentCase.gr_number || '');
-    formData.append('date', currentCase.date || '');
-    formData.append('citation', currentCase.citation || '');
-    formData.append('ponente', currentCase.ponente || '');
-    formData.append('reference', currentCase.reference || '');
-    formData.append('url', currentCase.url || '');
-    
-    if (pdfFile.value) {
-        formData.append('pdf_file', pdfFile.value);
-    }
-
-    router.post(route('jurisprudence.update', currentCase.id), formData, {
-        forceFormData: true, 
-        onSuccess: () => {
-            showEditModal.value = false;
-            pdfFile.value = null;
-        },
-        onError: (err) => {
-            errors.value = err;
-        },
-        onFinish: () => {
-            processing.value = false;
-        },
-        preserveScroll: true
-    });
+const refreshData = () => {
+    fetchData(cases.value.current_page);
 };
 
-const deleteCase = (id) => {
-    if (!confirm("Are you sure?")) return;
-    router.delete(route('jurisprudence.destroy', id));
+const goToCreate = () => {
+  window.location.href = '/jurisprudence/create';
 };
 
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+const resetFilters = () => {
+  Object.assign(filterState, {year: '', sort: 'latest', rows: 10});
+  search.value = '';
+  fetchData(1);
+};
+
+// Initial data fetch
+onMounted(() => {
+  fetchData();
+});
 </script>
 
 <template>
-    <AppLayout title="Jurisprudence">
-        <div class="min-h-screen bg-slate-50 text-slate-800 font-sans relative">
+    <Head title="Jurisprudence" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="min-h-screen bg-background p-4">
             
-            <div v-if="importing" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-                <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4">
-                    <div class="w-12 h-12 border-4 border-[#5c1e99] border-t-transparent rounded-full animate-spin"></div>
-                    <p class="text-sm font-bold text-slate-700">Processing Import... Please wait.</p>
-                </div>
-            </div>
-
-            <div class="bg-white border-b border-slate-200 py-6 px-8 sticky top-0 z-10">
-                <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- Header -->
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Jurisprudence Bank</h1>
-                        <p class="text-sm text-slate-500 font-medium">Legal Archives Management System</p>
+                        <h1 class="text-2xl font-bold tracking-tight">Jurisprudence Bank</h1>
+                        <p class="text-muted-foreground">Legal Archives Management System</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <label class="cursor-pointer px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition shadow-sm">
-                            Import Excel/CSV
-                            <input type="file" @change="importExcel" class="hidden" accept=".xlsx,.xls,.csv" />
-                        </label>
-                        <button class="bg-[#5c1e99] hover:bg-[#4a187a] text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-md transition-all active:scale-95">
-                            + Add New Case
-                        </button>
+                    <div class="flex gap-2">
+                        <ExcelImportDialog 
+                            trigger-text="Import Excel/CSV"
+                            trigger-variant="outline"
+                            :trigger-icon="FileSpreadsheet"
+                            @import-success="handleImportSuccess"
+                            @import-error="handleImportError"
+                        />
+                        <Button @click="goToCreate" class="gap-2">
+                            <Plus class="h-4 w-4" />
+                            Add New Case
+                        </Button>
                     </div>
                 </div>
             </div>
 
-            <main class="max-w-7xl mx-auto px-8 py-8">
-                
-                <div class="bg-white p-4 rounded-t-xl border border-slate-200 flex flex-wrap items-center gap-4">
-                    <div class="flex-1 min-w-[300px] relative">
-                        <div class="absolute left-3 top-2.5 text-slate-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+            <!-- Table -->
+            <Card>
+                <CardContent class="p-0">
+                    <!-- Filters -->
+                    <div class="flex flex-wrap items-center justify-end gap-3 p-4">
+                        <div class="relative flex-1 min-w-[200px] max-w-[320px]">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                <Search v-if="!searchLoading" class="h-4 w-4 text-muted-foreground" />
+                                <Loader2 v-else class="h-4 w-4 animate-spin text-primary" />
+                            </div>
+                            <Input 
+                                v-model="search" 
+                                @input="handleSearch"
+                                placeholder="Search G.R. No. or Case Title..." 
+                                class="pl-9"
+                                :disabled="loading"
+                            />
                         </div>
-                        <input v-model="search" @input="fetchData(1)" placeholder="Search G.R. No. or Case Title..." 
-                            class="w-full bg-slate-50 border-slate-200 rounded-lg py-2 pl-10 text-sm focus:ring-2 focus:ring-[#5c1e99]/20 focus:border-[#5c1e99] outline-none transition-all" />
+                        
+                        <Select v-model="filterState.sort" :disabled="loading">
+                            <SelectTrigger class="w-[130px]">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="latest">Newest First</SelectItem>
+                                <SelectItem value="oldest">Oldest First</SelectItem>
+                                <SelectItem value="az">A-Z (Title)</SelectItem>
+                                <SelectItem value="za">Z-A (Title)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        
+                        <Input 
+                            v-model="filterState.year" 
+                            type="number" 
+                            placeholder="Year" 
+                            class="w-24"
+                            :disabled="loading"
+                        />
+                        
+                        <Button 
+                            variant="ghost" 
+                            @click="resetFilters"
+                            class="gap-1"
+                            :disabled="loading"
+                        >
+                            <RefreshCw class="h-4 w-4" />
+                            <span class="hidden sm:inline">Reset</span>
+                        </Button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <select v-model="filterState.sort" class="border-slate-200 bg-slate-50 rounded-lg py-2 text-sm p-2 outline-none focus:border-[#5c1e99]">
-                            <option value="latest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                            <option value="az">A-Z (Title)</option>
-                            <option value="za">Z-A (Title)</option>
-                        </select>
-                        <input v-model="filterState.year" type="number" placeholder="Year" class="w-24 border-slate-200 bg-slate-50 rounded-lg py-2 text-sm p-2 focus:border-[#5c1e99]" />
-                        <button @click="Object.assign(filterState, {year: '', sort: 'latest', rows: 10})" class="text-xs font-bold text-[#5c1e99] hover:text-[#4a187a] px-2">Reset</button>
-                    </div>
-                </div>
-
-                <div class="bg-white border-x border-b border-slate-200 shadow-sm overflow-hidden rounded-b-xl">
-                    <table class="w-full text-left text-sm table-fixed">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4 w-[15%]">G.R. & Date</th>
-                                <th class="px-6 py-4 w-[40%]">Case Title</th>
-                                <th class="px-6 py-4 w-[10%] text-center">Volume</th>
-                                <th class="px-6 py-4 w-[10%] text-center">Reference</th>
-                                <th class="px-6 py-4 w-[10%] text-center">PDF</th>
-                                <th class="px-6 py-4 w-[15%] text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="item in cases.data" :key="item.id" class="hover:bg-[#5c1e99]/5 transition-colors group">
-                                <td class="px-6 py-5 align-top">
-                                    <div class="font-bold text-slate-900 whitespace-nowrap">{{ item.gr_number }}</div>
-                                    <div class="text-[11px] text-slate-400 mt-1 font-medium">{{ formatDate(item.date) }}</div>
-                                </td>
-                                <td class="px-6 py-5 align-top">
-                                    <div class="line-clamp-2 font-semibold text-slate-700 leading-relaxed group-hover:text-[#5c1e99] transition-colors">
+                    
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead class="w-[15%]">G.R. & Date</TableHead>
+                                <TableHead class="w-[40%]">Case Title</TableHead>
+                                <TableHead class="w-[15%] text-center">Reference</TableHead>
+                                <TableHead class="w-[10%] text-center">PDF</TableHead>
+                                <TableHead class="w-[20%] text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <!-- Skeleton loading rows -->
+                            <template v-if="loading && cases.data?.length === 0">
+                                <TableRow v-for="i in 5" :key="i">
+                                    <TableCell>
+                                        <div class="space-y-2">
+                                            <Skeleton class="h-5 w-24" />
+                                            <Skeleton class="h-3 w-16" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="space-y-2">
+                                            <Skeleton class="h-5 w-64" />
+                                            <Skeleton class="h-3 w-48" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="text-center">
+                                        <Skeleton class="h-5 w-12 mx-auto" />
+                                    </TableCell>
+                                    <TableCell class="text-center">
+                                        <Skeleton class="h-8 w-8 rounded-full mx-auto" />
+                                    </TableCell>
+                                    <TableCell class="text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <Skeleton class="h-8 w-8 rounded-md" />
+                                            <Skeleton class="h-8 w-8 rounded-md" />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </template>
+                            
+                            <!-- Actual data rows -->
+                            <TableRow v-for="item in cases.data" :key="item.id" class="group">
+                                <TableCell>
+                                    <div class="font-semibold">{{ item.gr_number }}</div>
+                                    <div class="text-xs text-muted-foreground mt-1">{{ formatDate(item.date) }}</div>
+                                </TableCell>
+                                <TableCell>
+                                    <div class="font-medium line-clamp-2 group-hover:text-primary transition-colors">
                                         {{ item.citation }}
                                     </div>
-                                    <div class="text-[10px] text-slate-400 mt-1.5 uppercase tracking-tighter italic">
-                                        Ponente: {{ item.ponente || 'N/A' }}
+                                    <div class="text-xs text-muted-foreground mt-1">
+                                        Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
                                     </div>
-                                </td>
-                                <td class="px-6 py-5 align-top text-center">
-                                    <span class="inline-block px-2 py-1 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">
-                                        {{ item.reference || 'N/A' }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-5 align-top text-center">
-                                    <a v-if="item.url" :href="item.url" target="_blank" class="text-[#5c1e99] hover:underline text-xs font-bold inline-flex items-center gap-1">
-                                        URL
-                                    </a>
-                                    <span v-else class="text-slate-300">—</span>
-                                </td>
-                                <td class="px-6 py-5 align-top text-center">
-                                    <a v-if="item.pdf_availability" :href="item.pdf_path" target="_blank" 
-                                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#5a1e8f]/10 text-[#5a1e8f] hover:bg-[#b331fe] hover:text-white transition-all shadow-sm group/pdf">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                    </a>
-                                    <span v-else class="text-slate-200">—</span>
-                                </td>
-                                <td class="px-6 py-5 align-top text-right">
-                                    <div class="flex justify-end gap-4">
-                                        <button @click="openEdit(item)" class="text-[#5c1e99] hover:text-[#4a187a] font-bold">Edit</button>
-                                        <button @click="deleteCase(item.id)" class="text-[#000000] hover:text-[#222222] font-bold">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                </TableCell>
 
-                    <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <!-- https://lawphil.net/judjuris/juri2025/sep2025/gr_02219_2025.html -->
+                                <TableCell class="text-center">
+                                    <a 
+                                        v-if="item.url" 
+                                        :href="item.url.startsWith('http') ? item.url : `https://lawphil.net/judjuris/${item.url}`" 
+                                        target="_blank" 
+                                        class="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                                    >
+                                        Link<SquareArrowOutUpRight class="h-3 w-3" />
+                                    </a>
+                                    <span v-else class="text-muted-foreground">—</span>
+                                </TableCell>
+
+                                <!-- https://lawphil.net/judjuris/juri2025/sep2025/pdf/gr_02219_2025.pdf -->
+                                <TableCell class="text-center">
+                                    <a v-if="item.pdf_availability" :href="item.pdf_path" target="_blank" 
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+                                        <FileText class="h-4 w-4" />
+                                    </a>
+                                    <span v-else class="text-muted-foreground">—</span>
+                                </TableCell>
+
+                                <TableCell class="text-right">
+                                    <div class="flex justify-end gap-2">
+                                        <Button variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading">
+                                            <SquarePen class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" @click="confirmDelete(item.id)" :disabled="loading">
+                                            <Trash2 class="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                            <TableRow v-if="cases.data?.length === 0 && !loading">
+                                <TableCell colspan="5" class="text-center py-8">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <AlertCircle class="h-8 w-8 text-muted-foreground" />
+                                        <p class="text-muted-foreground">No cases found</p>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+
+                    <!-- Pagination -->
+                    <div class="border-t px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
-                            <div class="text-xs text-slate-500 font-medium">
+                            <p class="text-sm text-muted-foreground">
                                 Showing {{ cases.from }} to {{ cases.to }} of {{ cases.total }} entries
-                            </div>
+                            </p>
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">Show</span>
-                                <select v-model="filterState.rows" class="bg-white border-slate-200 rounded-md text-[11px] font-bold py-1 px-2 focus:ring-1 focus:ring-[#5c1e99] outline-none transition-all">
-                                    <option :value="10">10</option>
-                                    <option :value="25">25</option>
-                                    <option :value="50">50</option>
-                                    <option :value="100">100</option>
-                                </select>
+                                <span class="text-sm text-muted-foreground">Show</span>
+                                <Select v-model="filterState.rows" :disabled="loading">
+                                    <SelectTrigger class="w-[70px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem :value="10">10</SelectItem>
+                                        <SelectItem :value="25">25</SelectItem>
+                                        <SelectItem :value="50">50</SelectItem>
+                                        <SelectItem :value="100">100</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-1">
-                            <button @click="fetchData(cases.current_page - 1)" :disabled="cases.current_page === 1"
-                                class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 disabled:opacity-30 hover:bg-slate-50 transition shadow-sm mr-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                            </button>
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                @click="fetchData(cases.current_page - 1)" 
+                                :disabled="cases.current_page === 1 || loading"
+                            >
+                                <ChevronLeft class="h-4 w-4" />
+                            </Button>
 
                             <template v-for="(page, index) in pageNumbers" :key="index">
-                                <button v-if="page !== '...'" 
+                                <Button 
+                                    v-if="page !== '...'" 
+                                    variant="outline"
+                                    size="sm"
                                     @click="fetchData(page)" 
-                                    :class="[
-                                        'w-8 h-8 rounded-lg text-xs font-bold transition-all',
-                                        cases.current_page === page 
-                                        ? 'bg-[#5c1e99] text-white shadow-md' 
-                                        : 'bg-white border border-slate-200 text-slate-600 hover:border-[#5c1e99] hover:text-[#5c1e99]'
-                                    ]">
+                                    :class="cases.current_page === page ? 'bg-primary text-primary-foreground' : ''"
+                                    :disabled="loading"
+                                >
                                     {{ page }}
-                                </button>
-                                <span v-else class="px-2 text-slate-400 text-xs font-bold">...</span>
+                                </Button>
+                                <span v-else class="px-2 text-muted-foreground">...</span>
                             </template>
 
-                            <button @click="fetchData(cases.current_page + 1)" :disabled="cases.current_page === cases.last_page"
-                                class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 disabled:opacity-30 hover:bg-slate-50 transition shadow-sm ml-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                            </button>
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                @click="fetchData(cases.current_page + 1)" 
+                                :disabled="cases.current_page === cases.last_page || loading"
+                            >
+                                <ChevronRight class="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
-                </div>
-            </main>
+                </CardContent>
+            </Card>
         </div>
 
-        <div v-if="showEditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
-                <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
-                    <h3 class="text-lg font-bold text-slate-800">Edit Case Information</h3>
-                    <button @click="showEditModal = false" :disabled="processing" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
-                </div>
-                
-                <div class="p-8 space-y-4 overflow-y-auto">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">G.R. Number</label>
-                            <input v-model="currentCase.gr_number" :class="{'border-red-500': errors.gr_number}" class="w-full border-slate-200 rounded-lg text-sm p-2 focus:border-[#5c1e99] outline-none" />
-                            <p v-if="errors.gr_number" class="text-red-500 text-[10px] mt-1">{{ errors.gr_number }}</p>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</label>
-                            <input type="date" v-model="currentCase.date" :class="{'border-red-500': errors.date}" class="w-full border-slate-200 rounded-lg text-sm p-2 focus:border-[#5c1e99] outline-none" />
-                            <p v-if="errors.date" class="text-red-500 text-[10px] mt-1">{{ errors.date }}</p>
-                        </div>
-                    </div>
+        <!-- Edit Dialog Component -->
+        <EditCaseDialog 
+            v-model:open="showEditModal"
+            :case-data="currentCase"
+            @saved="refreshData"
+        />
 
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Case Citation / Title</label>
-                        <textarea v-model="currentCase.citation" :class="{'border-red-500': errors.citation}" class="w-full border-slate-200 rounded-lg text-sm p-2 focus:border-[#5c1e99] outline-none" rows="3"></textarea>
-                        <p v-if="errors.citation" class="text-red-500 text-[10px] mt-1">{{ errors.citation }}</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ponente</label>
-                            <input v-model="currentCase.ponente" class="w-full border-slate-200 rounded-lg text-sm p-2 focus:border-[#5c1e99] outline-none" />
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Volume</label>
-                            <input v-model="currentCase.reference" class="w-full border-slate-200 rounded-lg text-sm p-2 focus:border-[#5c1e99] outline-none" />
-                        </div>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reference URL</label>
-                        <input v-model="currentCase.url" class="w-full border-slate-200 rounded-lg text-sm p-2 focus:border-[#5c1e99] outline-none" />
-                    </div>
-
-                    <div class="mt-4 p-4 rounded-xl bg-[#5c1e99]/5 border border-[#5c1e99]/10">
-                        <label class="text-[10px] font-bold text-[#5c1e99] uppercase tracking-widest block mb-2">Upload PDF Document</label>
-                        <input type="file" @change="handlePdfChange" accept=".pdf" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#5c1e99] file:text-white hover:file:bg-[#4a187a]" />
-                        <p v-if="errors.pdf_file" class="text-red-500 text-[10px] mt-1">{{ errors.pdf_file }}</p>
-                    </div>
-
-                    <div class="flex gap-3 pt-4 sticky bottom-0 bg-white pb-2 border-t border-slate-50 mt-4">
-                        <button @click="updateCase" :disabled="processing" class="flex-1 bg-[#5c1e99] text-white py-3 rounded-xl text-sm font-bold shadow-lg hover:bg-[#4a187a] transition-all flex items-center justify-center gap-2">
-                            <span v-if="processing" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                            {{ processing ? 'Updating...' : 'Save Changes' }}
-                        </button>
-                        <button @click="showEditModal = false" :disabled="processing" class="px-6 py-3 text-slate-500 text-sm font-semibold hover:bg-slate-50 rounded-xl transition">Cancel</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Delete Dialog Component -->
+        <DeleteCaseDialog
+            v-model:open="showDeleteDialog"
+            :case-id="deleteId"
+            @deleted="refreshData"
+        />
     </AppLayout>
 </template>
