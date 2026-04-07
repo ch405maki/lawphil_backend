@@ -13,13 +13,13 @@ const user = usePage().props.auth.user;
 
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
+    { title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel },
     {
         title: 'Executive Issuances',
         href: '#',
         icon: FileText,
         children: [
-            { title: 'Jurisprudence', href: route('jurisprudence.index') },
-            { title: 'Presidential Decrees', href: route('dashboard') },
+            { title: 'Presidential Decrees', href: route('dashboard') }, 
             { title: 'Executive Orders', href: route('dashboard') },
             { title: 'Administrative Orders', href: route('dashboard') },
             { title: 'Memorandum Orders', href: route('dashboard') },
