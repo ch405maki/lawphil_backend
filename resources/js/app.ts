@@ -1,5 +1,5 @@
 import '../css/app.css';
-
+import axios from 'axios';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
@@ -9,35 +9,34 @@ import { initializeTheme } from './composables/useAppearance';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 
-// Extend ImportMeta interface for Vite...
-declare module 'vite/client' {
-    interface ImportMetaEnv {
-        readonly VITE_APP_NAME: string;
-        [key: string]: string | boolean | undefined;
-    }
-
-    interface ImportMeta {
-        readonly env: ImportMetaEnv;
-        readonly glob: <T>(pattern: string) => Record<string, () => Promise<T>>;
-    }
-}
-
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(Toast)
-            .use(ZiggyVue)
-            .mount(el);
-    },
-    progress: {
-        color: '#4B5563',
-    },
-});
+// Axios config for Sanctum
+axios.defaults.withCredentials = true; // send cookies automatically
 
-// This will set light / dark mode on page load...
-initializeTheme();
+// Fetch CSRF cookie before mounting app
+axios.get('/sanctum/csrf-cookie').then(() => {
+
+    createInertiaApp({
+        title: (title) => `${title} - ${appName}`,
+        resolve: (name) => resolvePageComponent(
+            `./pages/${name}.vue`, 
+            import.meta.glob<DefineComponent>('./pages/**/*.vue')
+        ),
+        setup({ el, App, props, plugin }) {
+            createApp({ render: () => h(App, props) })
+                .use(plugin)
+                .use(Toast)
+                .use(ZiggyVue)
+                .mount(el);
+        },
+        progress: {
+            color: '#4B5563',
+        },
+    });
+
+    initializeTheme();
+
+}).catch((err) => {
+    console.error('Failed to fetch CSRF cookie', err);
+});

@@ -18,7 +18,7 @@ Route::prefix('jurisprudence')->group(function () {
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
-});
+})->middleware('auth:sanctum');
 
 Route::prefix('v1')->group(function () {
     Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import']);

@@ -4,7 +4,6 @@ import axios, { AxiosError } from 'axios';
 import { useToast } from 'vue-toastification';
 
 // Shadcn UI Components
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,15 +38,12 @@ interface ErrorResponse {
 
 const deleteCase = async () => {
   if (!props.caseId) return;
-  
+
   processing.value = true;
 
   try {
-    const response = await axios.delete(`/api/jurisprudence/${props.caseId}`, {
-      headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      }
-    });
+    // Simplified API call: relative URL only
+    const response = await axios.delete(`/api/jurisprudence/${props.caseId}`);
 
     if (response.data.success) {
       toast.success('Case deleted successfully!');
