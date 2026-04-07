@@ -1,6 +1,5 @@
 <?php
 
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -16,13 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-
-        $middleware->api(prepend: [
-            EnsureFrontendRequestsAreStateful::class,
-        ]);
-
         $middleware->encryptCookies(except: ['appearance']);
 
+        $middleware->statefulApi();
+        
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

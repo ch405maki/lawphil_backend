@@ -38,12 +38,15 @@ interface ErrorResponse {
 
 const deleteCase = async () => {
   if (!props.caseId) return;
-
+  
   processing.value = true;
 
   try {
-    // Simplified API call: relative URL only
-    const response = await axios.delete(`/api/jurisprudence/${props.caseId}`);
+    const response = await axios.delete(`/api/jurisprudence/${props.caseId}`, {
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      }
+    });
 
     if (response.data.success) {
       toast.success('Case deleted successfully!');

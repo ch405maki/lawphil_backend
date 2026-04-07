@@ -12,13 +12,13 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // Jurisprudence Management
-Route::prefix('jurisprudence')->group(function () {
+Route::middleware('auth:sanctum')->prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
-})->middleware('auth:sanctum');
+});
 
 Route::prefix('v1')->group(function () {
     Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import']);
