@@ -11,16 +11,6 @@
     import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
     import { 
         ChevronDown,
-        LayoutGrid,
-        UserRoundCog,
-        UsersRound,
-        KeyRound,
-        Vote,
-        List,
-        FileBox,
-        Package2,
-        Logs,
-        UserRound
     } from 'lucide-vue-next';
     import { Link, usePage } from '@inertiajs/vue3';
     import { type NavItem } from '@/types';
@@ -49,7 +39,7 @@
     };
 </script>
 
-    <template>
+<template>
     <SidebarGroup class="px-2 py-0">
         <SidebarGroupLabel v-if="groupLabel">{{ groupLabel }}</SidebarGroupLabel>
         <SidebarMenu>
@@ -108,4 +98,4 @@
         </template>
         </SidebarMenu>
     </SidebarGroup>
-    </template>
+</template>

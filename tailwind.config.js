@@ -12,7 +12,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Instrument Sans', ...defaultTheme.fontFamily.sans],
+                sans: ['Instrument Sans','Times New Roman', ...defaultTheme.fontFamily.sans],
+                times: ['"Times New Roman"', 'serif'],
             },
             borderRadius: {
                 lg: 'var(--radius)',

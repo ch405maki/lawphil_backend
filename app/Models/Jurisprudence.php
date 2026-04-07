@@ -22,7 +22,6 @@ class Jurisprudence extends Model
     ];
 
     protected $casts = [
-        'pdf_availability' => 'boolean',
         'date' => 'date',
     ];
 }
