@@ -23,7 +23,8 @@ const formData = reactive({
   reference: '',
   url: '',
   pdf_availability: false,
-  subject: ''
+  subject: '',
+  pdf_path: ''
 });
 
 // Form validation errors
@@ -34,7 +35,8 @@ const errors = reactive({
   ponente: '',
   reference: '',
   url: '',
-  subject: ''
+  subject: '',
+  pdf_path: ''
 });
 
 const isLoading = ref(false);
@@ -73,6 +75,7 @@ const clearForm = () => {
   formData.url = '';
   formData.pdf_availability = false;
   formData.subject = '';
+  formData.pdf_path = '';
   
   // Reset errors
   Object.keys(errors).forEach(key => {
@@ -235,16 +238,36 @@ const resetForm = () => {
         <p v-if="errors.subject" class="text-sm text-red-500">{{ errors.subject }}</p>
       </div>
       
-      <!-- PDF Availability Checkbox -->
-      <div class="flex items-center space-x-2">
-        <Checkbox
-          id="pdf_availability"
-          v-model:checked="formData.pdf_availability"
-          :disabled="isLoading"
-        />
-        <Label for="pdf_availability" class="cursor-pointer">
-          PDF Available
-        </Label>
+      <!-- PDF Availability Section - Inline with wider input -->
+      <div class="space-y-2">
+          <div class="flex items-start gap-4">
+              <div class="flex items-center space-x-2 pt-2">
+                  <Checkbox
+                      id="pdf_availability"
+                      v-model:checked="formData.pdf_availability"
+                      :disabled="isLoading"
+                  />
+                  <Label for="pdf_availability" class="cursor-pointer">
+                      PDF Available
+                  </Label>
+              </div>
+              
+              <div class="flex-1">
+                  <Input
+                      id="pdf_path"
+                      v-model="formData.pdf_path"
+                      type="text"
+                      placeholder="Enter PDF path or URL (e.g., /uploads/pdfs/case.pdf)"
+                      :disabled="isLoading || !formData.pdf_availability"
+                      :class="{ 'border-red-500': errors.pdf_path }"
+                      class="w-full"
+                  />
+                  <p v-if="errors.pdf_path" class="text-sm text-red-500 mt-1">{{ errors.pdf_path }}</p>
+                  <p v-if="formData.pdf_availability" class="text-xs text-muted-foreground mt-1">
+                      You can enter a relative path or full URL to the PDF file
+                  </p>
+              </div>
+          </div>
       </div>
       
       <!-- Form Actions -->

@@ -92,6 +92,7 @@ class JurisprudenceImport
             $url = $this->cleanValue($row[5] ?? null);
             $pdfAvailability = $this->cleanValue($row[6] ?? null);
             $subject = $this->cleanValue($row[7] ?? null);
+            $pdf_path = $this->cleanValue($row[8] ?? null);
             
             // Validate required fields
             $this->validateRequiredFields($grNumber, $dateValue, $rowNumber);
@@ -119,6 +120,7 @@ class JurisprudenceImport
                 'url' => !empty($url) ? $url : null,
                 'pdf_availability' => $pdfAvailabilityBool,
                 'subject' => !empty($subject) ? $subject : null,
+                'pdf_path' => !empty($pdf_path) ? $pdf_path : null,
             ];
             
             // Create record
@@ -158,7 +160,8 @@ class JurisprudenceImport
             'reference',
             'url',
             'pdf_availability',
-            'subject'
+            'subject',
+            'pdf_path'
         ];
         
         $errors = [];

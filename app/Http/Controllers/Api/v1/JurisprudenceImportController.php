@@ -79,7 +79,8 @@ class JurisprudenceImportController extends Controller
                 'E1' => 'reference',
                 'F1' => 'url',
                 'G1' => 'pdf_availability',
-                'H1' => 'subject'
+                'H1' => 'subject',
+                'I1' => 'pdf_path'
             ];
             
             foreach ($headers as $cell => $value) {
@@ -87,12 +88,12 @@ class JurisprudenceImportController extends Controller
             }
             
             // Add instructions
-            $sheet->setCellValue('J1', 'INSTRUCTIONS:');
-            $sheet->setCellValue('J2', '* = Required field (only GR Number and Date are required)');
-            $sheet->setCellValue('J3', 'Date format: YYYY-MM-DD (e.g., 2024-01-15)');
-            $sheet->setCellValue('J4', 'PDF Availability: Yes/No, True/False, 1/0 (blank defaults to 0/No)');
-            $sheet->setCellValue('J5', 'All other fields (citation, ponente, reference, url, subject) are optional');
-            $sheet->setCellValue('J6', 'Empty fields will be stored as NULL in database');
+            $sheet->setCellValue('K1', 'INSTRUCTIONS:');
+            $sheet->setCellValue('K2', '* = Required field (only GR Number and Date are required)');
+            $sheet->setCellValue('K3', 'Date format: YYYY-MM-DD (e.g., 2024-01-15)');
+            $sheet->setCellValue('K4', 'PDF Availability: Yes/No, True/False, 1/0 (blank defaults to 0/No)');
+            $sheet->setCellValue('K5', 'All other fields (citation, ponente, reference, url, subject) are optional');
+            $sheet->setCellValue('K6', 'Empty fields will be stored as NULL in database');
             
             // Add example data
             $examples = [
@@ -104,6 +105,7 @@ class JurisprudenceImportController extends Controller
                 'F2' => 'https://example.com/case',
                 'G2' => 'Yes',
                 'H2' => 'Civil Law',
+                'I2' => '/uploads/pdfs/case_123456.pdf',
                 
                 'A3' => 'G.R. No. 123457',
                 'B3' => '2024-02-20',
@@ -113,6 +115,7 @@ class JurisprudenceImportController extends Controller
                 'F3' => '',
                 'G3' => 'No',
                 'H3' => '',
+                'I3' => '/uploads/pdfs/case_123456.pdf',
                 
                 'A4' => 'G.R. No. 123458',
                 'B4' => '2024-03-10',
@@ -122,6 +125,7 @@ class JurisprudenceImportController extends Controller
                 'F4' => '',
                 'G4' => '',
                 'H4' => '',
+                'I4' => '',
             ];
             
             foreach ($examples as $cell => $value) {
@@ -136,7 +140,7 @@ class JurisprudenceImportController extends Controller
                     'startColor' => ['rgb' => 'E0E0E0']
                 ]
             ];
-            $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:I1')->applyFromArray($headerStyle);
             
             // Style required fields
             $requiredStyle = ['font' => ['color' => ['rgb' => 'FF0000']]];
@@ -144,10 +148,10 @@ class JurisprudenceImportController extends Controller
             $sheet->getStyle('B1')->applyFromArray($requiredStyle);
             
             // Auto-size columns
-            foreach (range('A', 'H') as $col) {
+            foreach (range('A', 'I') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
-            $sheet->getColumnDimension('J')->setWidth(45);
+            $sheet->getColumnDimension('K')->setWidth(45);
             
             // Create writer and output
             $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
