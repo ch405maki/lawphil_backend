@@ -4,7 +4,6 @@ import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { LayoutGrid, UserRoundCog, BarChart3, Gavel, FileUp } from 'lucide-vue-next';
@@ -54,14 +53,14 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
-            
-            <SidebarGroup v-if="user.role === 'admin'">
-                <SidebarGroupLabel>Data Management</SidebarGroupLabel>
-                <NavMain :items="adminNavItems" />
-            </SidebarGroup>
+            <NavMain :items="mainNavItems" group-label="Navigation"/>
 
-            <!-- <NavMain :items="reportItems" group-label="Reports" /> -->
+            <!-- admin -->
+            <div v-if="user.role === 'admin'">
+                <NavMain :items="adminNavItems" group-label="Data Management"/>
+            </div>
+            
+            <NavMain :items="reportItems" group-label="Reports" />
         </SidebarContent>
 
         <SidebarFooter>
