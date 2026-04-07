@@ -165,4 +165,75 @@ class JurisprudenceController extends Controller
             ], 500);
         }
     }
+
+    public function bulkDelete(Request $request)
+    {
+        try {
+            // If select_all is true, delete all records matching filters
+            if ($request->select_all) {
+                $query = Jurisprudence::query();
+                
+                // Apply filters
+                if (!empty($request->filters['search'])) {
+                    $s = $request->filters['search'];
+                    $query->where(function($q) use ($s) {
+                        $q->where('citation', 'LIKE', "%$s%")
+                        ->orWhere('gr_number', 'LIKE', "%$s%");
+                    });
+                }
+
+                if (!empty($request->filters['year'])) {
+                    $query->whereYear('date', $request->filters['year']);
+                }
+
+                if (!empty($request->filters['sort'])) {
+                    if ($request->filters['sort'] === 'az') {
+                        $query->orderBy('citation', 'asc');
+                    } elseif ($request->filters['sort'] === 'za') {
+                        $query->orderBy('citation', 'desc');
+                    } elseif ($request->filters['sort'] === 'oldest') {
+                        $query->orderBy('date', 'asc');
+                    } else {
+                        $query->orderBy('date', 'desc');
+                    }
+                }
+
+                $deleted = $query->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Successfully deleted {$deleted} records",
+                    'deleted_count' => $deleted
+                ]);
+            } 
+            
+            // Otherwise, delete only selected IDs
+            $validator = Validator::make($request->all(), [
+                'ids' => 'required|array',
+                'ids.*' => 'integer|exists:jurisprudence,id'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $deleted = Jurisprudence::whereIn('id', $request->ids)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted {$deleted} records",
+                'deleted_count' => $deleted
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete records: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
