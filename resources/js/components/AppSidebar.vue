@@ -4,10 +4,9 @@ import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, UserRoundCog, BarChart3, Gavel, FileUp } from 'lucide-vue-next';
+import { LayoutGrid, UserRoundCog, Gavel, FileUp, FileText, BarChart3 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage().props.auth.user;
@@ -15,6 +14,21 @@ const user = usePage().props.auth.user;
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
     { title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel },
+    {
+        title: 'Executive Issuances',
+        href: '#',
+        icon: FileText,
+        children: [
+            { title: 'Presidential Decrees', href: route('dashboard') }, 
+            { title: 'Executive Orders', href: route('dashboard') },
+            { title: 'Administrative Orders', href: route('administrative.index') },
+            { title: 'Memorandum Orders', href: route('dashboard') },
+            { title: 'Memorandum Circulars', href: route('dashboard') },
+            { title: 'Proclamations', href: route('dashboard') },
+            { title: 'General Orders', href: route('dashboard') },
+            { title: 'Special Orders', href: route('dashboard') },
+        ],
+    },
     { title: 'User Management', href: route('users.index'), icon: UserRoundCog },
 ];
 
@@ -28,8 +42,8 @@ const reportItems = ref([
         href: '#',
         icon: BarChart3,
         children: [
-            { title: 'Case Stats', href: '#' },
-            { title: 'User Logs', href: '#' },
+            { title: 'Case Stats', href: route('dashboard') },
+            { title: 'User Logs', href: route('dashboard') },
         ],
     },
 ]);
@@ -54,14 +68,13 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
-            
-            <SidebarGroup v-if="user.role === 'admin'">
-                <SidebarGroupLabel>Data Management</SidebarGroupLabel>
-                <NavMain :items="adminNavItems" />
-            </SidebarGroup>
+            <NavMain :items="mainNavItems" group-label="Navigation"/>
 
-            <!-- <NavMain :items="reportItems" group-label="Reports" /> -->
+            <div v-if="user.role === 'admin'">
+                <NavMain :items="adminNavItems" group-label="Data Management"/>
+            </div>
+            
+            <NavMain :items="reportItems" group-label="Reports" />
         </SidebarContent>
 
         <SidebarFooter>
