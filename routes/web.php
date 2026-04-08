@@ -5,6 +5,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
 use App\Http\Controllers\Web\JurisprudenceController;
+use App\Http\Controllers\Web\ExecutiveOrderController;
+use App\Http\Controllers\Web\MemorandumCircularController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -22,6 +24,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/create', [JurisprudenceController::class, 'create'])->name('jurisprudence.create');
     });
 
+    // executive orders
+    Route::prefix('executive-orders')->group(function () {
+        Route::get('/', [ExecutiveOrderController::class, 'index'])->name('executive-orders.index');
+        Route::get('/create', [ExecutiveOrderController::class, 'create'])->name('executive-orders.create');
+    });
+
+    // memorandum circulars
+    Route::prefix('memorandum-circulars')->group(function () {
+    Route::get('/', [MemorandumCircularController::class, 'index'])->name('memorandum-circulars.index');
+    Route::get('/create', [MemorandumCircularController::class, 'create'])->name('memorandum-circulars.create');
+});
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
