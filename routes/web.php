@@ -5,6 +5,9 @@ use Inertia\Inertia;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
 use App\Http\Controllers\Web\JurisprudenceController;
+// Heto yung idinagdag natin na imports
+use App\Http\Controllers\Web\MemorandumOrderController;
+use App\Http\Controllers\Web\GeneralOrderController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -18,10 +21,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // jurisprudence
     Route::prefix('jurisprudence')->group(function () {
-    Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
-    Route::get('/create', [JurisprudenceController::class, 'create'])->name('jurisprudence.create');
+        Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+        Route::get('/create', [JurisprudenceController::class, 'create'])->name('jurisprudence.create');
     });
 
+    // memorandum orders (BAGO)
+    Route::prefix('memorandum-orders')->group(function () {
+        Route::get('/', [MemorandumOrderController::class, 'index'])->name('memorandum-orders.index');
+        Route::get('/create', [MemorandumOrderController::class, 'create'])->name('memorandum-orders.create');
+    });
+
+    // general orders (BAGO)
+    Route::prefix('general-orders')->group(function () {
+        Route::get('/', [GeneralOrderController::class, 'index'])->name('general-orders.index');
+        Route::get('/create', [GeneralOrderController::class, 'create'])->name('general-orders.create');
+    });
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
