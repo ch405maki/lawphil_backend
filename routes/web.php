@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
 use App\Http\Controllers\Web\JurisprudenceController;
+use App\Http\Controllers\Web\AdministrativeOrderController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -20,6 +21,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::get('/create', [JurisprudenceController::class, 'create'])->name('jurisprudence.create');
+    });
+
+    // administrative order
+    Route::prefix('administrative')->group(function () {
+    Route::get('/', [AdministrativeOrderController::class, 'index'])->name('administrative.index');
+    Route::get('/create', [AdministrativeOrderController::class, 'create'])->name('administrative.create');
     });
 
 

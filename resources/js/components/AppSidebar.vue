@@ -21,7 +21,7 @@ const mainNavItems: NavItem[] = [
         children: [
             { title: 'Presidential Decrees', href: route('dashboard') }, 
             { title: 'Executive Orders', href: route('dashboard') },
-            { title: 'Administrative Orders', href: route('dashboard') },
+            { title: 'Administrative Orders', href: route('administrative.index') },
             { title: 'Memorandum Orders', href: route('dashboard') },
             { title: 'Memorandum Circulars', href: route('dashboard') },
             { title: 'Proclamations', href: route('dashboard') },

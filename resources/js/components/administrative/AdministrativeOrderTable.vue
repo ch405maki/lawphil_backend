@@ -36,37 +36,34 @@ import {
 } from '@/components/ui/alert-dialog';
 
 // Custom Components
-import EditCaseDialog from '@/components/jurisprudence/EditCaseDialog.vue';
-import DeleteCaseDialog from '@/components/jurisprudence/DeleteCaseDialog.vue';
+import EditOrderDialog from '@/components/administrative/EditOrderDialog.vue';
+import DeleteOrderDialog from '@/components/administrative/DeleteOrderDialog.vue';
 
 // Icons
 import {
   Search,
-  Trash2,
-  SquarePen,
-  SquareArrowOutUpRight,
-  FileText,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
   Loader2,
-  AlertCircle,
   Trash,
+  Trash2,
+  SquarePen,
+  SquareArrowOutUpRight,
+  FileText,
+  AlertCircle,
   X
 } from 'lucide-vue-next';
 
-// Props
 const props = defineProps<{
   refreshTrigger?: number;
 }>();
 
-// Emits
 const emit = defineEmits<{
   (e: 'refresh'): void;
 }>();
 
-// Data state
-const cases = ref<any>({
+const orders = ref<any>({
   data: [],
   current_page: 1,
   last_page: 1,
@@ -83,7 +80,6 @@ const loading = ref(false);
 const searchLoading = ref(false);
 const isSearching = ref(false);
 
-// Multiple deletion state
 const selectedIds = ref<number[]>([]);
 const showBulkDeleteDialog = ref(false);
 const bulkDeleting = ref(false);
@@ -94,44 +90,25 @@ const filterState = reactive({
     rows: 10
 });
 
-const currentCase = ref({
+const currentOrder = ref({
     id: null,
-    gr_number: '',
+    ao_number: '',
     date: '',
-    citation: '',
-    ponente: '',
-    reference: '',
+    description: '',
+    subject: '',
     url: '',
     pdf_availability: false,
     pdf_path: ''
 });
 
-// Helper functions
-const generatePdfUrl = (url: string) => {
+const generateSourceUrl = (url: string) => {
   if (!url) return null;
-  if (url.startsWith('http')) {
-    const lastSlashIndex = url.lastIndexOf('/');
-    const fileName = url.substring(lastSlashIndex + 1);
-    const basePath = url.substring(0, lastSlashIndex);
-    const pdfFileName = fileName.replace('.html', '.pdf');
-    return `${basePath}/pdf/${pdfFileName}`;
-  }
-  const pathParts = url.split('/');
-  const fileName = pathParts.pop();
-  const basePath = pathParts.join('/');
-  const pdfFileName = fileName?.replace('.html', '.pdf');
-  return `https://lawphil.net/judjuris/${basePath}/pdf/${pdfFileName}`;
+  return url.startsWith('http') ? url : `https://www.officialgazette.gov.ph/${url}`;
 };
 
-const generateHtmlUrl = (url: string) => {
-  if (!url) return null;
-  return url.startsWith('http') ? url : `https://lawphil.net/judjuris/${url}`;
-};
-
-// Computed properties for multiple deletion
 const isAllSelectedOnPage = computed(() => {
-  return cases.value.data?.length > 0 && 
-         cases.value.data.every((item: any) => selectedIds.value.includes(item.id));
+  return orders.value.data?.length > 0 && 
+         orders.value.data.every((item: any) => selectedIds.value.includes(item.id));
 });
 
 const isSomeSelected = computed(() => {
@@ -144,6 +121,7 @@ let currentAbortController: AbortController | null = null;
 const handleSearch = () => {
   isSearching.value = true;
   searchLoading.value = true;
+  
   if (searchTimeout) clearTimeout(searchTimeout);
   if (currentAbortController) currentAbortController.abort();
   
@@ -154,8 +132,8 @@ const handleSearch = () => {
 };
 
 const pageNumbers = computed(() => {
-    const total = cases.value.last_page;
-    const current = cases.value.current_page;
+    const total = orders.value.last_page;
+    const current = orders.value.current_page;
     const delta = 2;
     const range = [];
     for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
@@ -170,8 +148,9 @@ const pageNumbers = computed(() => {
 
 const fetchData = async (page = 1, signal?: AbortSignal) => {
   if (!signal) loading.value = true;
+  
   try {
-    const response = await axios.get('/api/jurisprudence', {
+    const response = await axios.get('/api/v1/administrative', {
       params: {
         search: search.value,
         page: page,
@@ -181,17 +160,24 @@ const fetchData = async (page = 1, signal?: AbortSignal) => {
       },
       signal: signal
     });
-    cases.value = response.data;
+    
+    orders.value = response.data;
   } catch (error: any) {
     if (error.name !== 'AbortError' && error.code !== 'ERR_CANCELED') {
       console.error('Error fetching data:', error);
-      toast.error('Failed to fetch jurisprudence data');
+      toast.error('Failed to fetch administrative orders');
     }
   } finally {
     if (!signal) loading.value = false;
     searchLoading.value = false;
     isSearching.value = false;
   }
+};
+
+const refreshData = () => {
+    selectedIds.value = [];
+    fetchData(orders.value.current_page);
+    emit('refresh');
 };
 
 watch([() => filterState.year, () => filterState.sort, () => filterState.rows], () => {
@@ -202,11 +188,11 @@ watch([() => filterState.year, () => filterState.sort, () => filterState.rows], 
 });
 
 watch(() => props.refreshTrigger, () => {
-  fetchData(cases.value.current_page);
+  refreshData();
 });
 
 const openEdit = (item: any) => {
-    currentCase.value = { ...item };
+    currentOrder.value = { ...item };
     showEditModal.value = true;
 };
 
@@ -218,10 +204,10 @@ const confirmDelete = (id: number) => {
 const toggleSelectAllOnPage = () => {
   if (isAllSelectedOnPage.value) {
     selectedIds.value = selectedIds.value.filter(id => 
-      !cases.value.data.some((item: any) => item.id === id)
+      !orders.value.data.some((item: any) => item.id === id)
     );
   } else {
-    const pageIds = cases.value.data.map((item: any) => item.id);
+    const pageIds = orders.value.data.map((item: any) => item.id);
     selectedIds.value = [...new Set([...selectedIds.value, ...pageIds])];
   }
 };
@@ -234,37 +220,24 @@ const toggleSelect = (id: number) => {
 const bulkDelete = async () => {
   bulkDeleting.value = true;
   try {
-    const response = await axios.post('/api/jurisprudence/bulk-delete', {
+    const response = await axios.post('/api/v1/administrative/bulk-delete', {
       ids: selectedIds.value,
       select_all: false
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      }
     });
 
     if (response.data.success) {
-      toast.success(`Successfully deleted ${response.data.deleted_count} record(s)`);
+      toast.success(`Deleted ${response.data.deleted_count} order(s)`);
       showBulkDeleteDialog.value = false;
-      selectedIds.value = [];
-      fetchData(cases.value.current_page);
-      emit('refresh');
+      refreshData();
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || 'Failed to delete records');
+    toast.error('Failed to delete records');
   } finally {
     bulkDeleting.value = false;
   }
 };
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
-
-const refreshData = () => {
-    selectedIds.value = [];
-    fetchData(cases.value.current_page);
-    emit('refresh');
-};
 
 const resetFilters = () => {
   Object.assign(filterState, {year: '', sort: 'latest', rows: 10});
@@ -276,7 +249,7 @@ const resetFilters = () => {
 
 onMounted(() => fetchData());
 
-defineExpose({ refreshData });
+defineExpose({ refreshData, fetchData });
 </script>
 
 <template>
@@ -309,27 +282,25 @@ defineExpose({ refreshData });
           
           <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[200px] max-w-[320px]">
-              <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2">
                 <Search v-if="!searchLoading" class="h-4 w-4 text-muted-foreground" />
                 <Loader2 v-else class="h-4 w-4 animate-spin text-primary" />
               </div>
               <Input 
                 v-model="search" 
                 @input="handleSearch"
-                placeholder="Search G.R. No. or Case Title..." 
+                placeholder="Search AO No. or Description..." 
                 class="pl-9"
               />
             </div>
             
             <Select v-model="filterState.sort" :disabled="searchLoading">
               <SelectTrigger class="w-[130px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="latest">Newest First</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="az">A-Z (Title)</SelectItem>
-                <SelectItem value="za">Z-A (Title)</SelectItem>
               </SelectContent>
             </Select>
             
@@ -347,23 +318,23 @@ defineExpose({ refreshData });
             <TableRow>
               <TableHead class="w-12">
                 <Checkbox 
-                  :checked="isAllSelectedOnPage"
+                  :checked="isAllSelectedOnPage" 
                   :indeterminate="isSomeSelected"
-                  @click="toggleSelectAllOnPage"
-                  :disabled="loading || cases.data?.length === 0"
+                  @click="toggleSelectAllOnPage" 
+                  :disabled="loading || orders.data?.length === 0"
                 />
               </TableHead>
-              <TableHead class="w-[15%]">G.R. & Date</TableHead>
-              <TableHead class="w-[40%]">Case Title</TableHead>
-              <TableHead class="w-[15%] text-center">URL</TableHead>
+              <TableHead class="w-[15%]">AO No. & Date</TableHead>
+              <TableHead class="w-[40%]">Description</TableHead>
+              <TableHead class="w-[15%] text-center">Source</TableHead>
               <TableHead class="w-[10%] text-center">PDF</TableHead>
               <TableHead class="w-[20%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <template v-if="loading && cases.data?.length === 0">
+            <template v-if="loading && orders.data?.length === 0">
               <TableRow v-for="i in 5" :key="i">
-                <TableCell><Skeleton class="h-4 w-4" /></TableCell>
+                <TableCell><Skeleton class="h-4 w-4 mx-auto" /></TableCell>
                 <TableCell><Skeleton class="h-5 w-24" /></TableCell>
                 <TableCell><Skeleton class="h-5 w-64" /></TableCell>
                 <TableCell><Skeleton class="h-5 w-12 mx-auto" /></TableCell>
@@ -372,34 +343,32 @@ defineExpose({ refreshData });
               </TableRow>
             </template>
             
-            <TableRow v-for="item in cases.data" :key="item.id" class="group">
+            <TableRow v-for="item in orders.data" :key="item.id" class="group">
               <TableCell>
                 <Checkbox 
-                  :checked="selectedIds.includes(item.id)"
-                  @click="toggleSelect(item.id)"
+                  :checked="selectedIds.includes(item.id)" 
+                  @click="toggleSelect(item.id)" 
                   :disabled="loading"
                 />
               </TableCell>
               <TableCell>
-                <div class="font-semibold">{{ item.gr_number }}</div>
+                <div class="font-semibold">{{ item.ao_number }}</div>
                 <div class="text-xs text-muted-foreground mt-1">{{ formatDate(item.date) }}</div>
               </TableCell>
               <TableCell>
                 <div class="font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                  {{ item.citation }}
+                  {{ item.description }}
                 </div>
-                <div class="text-xs text-muted-foreground mt-1">
-                  Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
-                </div>
+                <div class="text-xs text-muted-foreground mt-1">{{ item.subject }}</div>
               </TableCell>
               <TableCell class="text-center">
-                <a v-if="item.url" :href="generateHtmlUrl(item.url)" target="_blank" class="inline-flex items-center gap-1 text-primary hover:underline text-sm">
+                <a v-if="item.url" :href="generateSourceUrl(item.url)" target="_blank" class="text-primary hover:underline text-sm inline-flex items-center gap-1">
                   Link <SquareArrowOutUpRight class="h-3 w-3" />
                 </a>
                 <span v-else class="text-muted-foreground">—</span>
               </TableCell>
               <TableCell class="text-center">
-                <a v-if="item.pdf_availability && item.url" :href="generatePdfUrl(item.url)" target="_blank" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+                <a v-if="item.pdf_availability" :href="item.pdf_path" target="_blank" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
                   <FileText class="h-4 w-4" />
                 </a>
                 <span v-else class="text-muted-foreground">—</span>
@@ -415,11 +384,12 @@ defineExpose({ refreshData });
                 </div>
               </TableCell>
             </TableRow>
-            <TableRow v-if="cases.data?.length === 0 && !loading">
+
+            <TableRow v-if="orders.data?.length === 0 && !loading">
               <TableCell colspan="6" class="text-center py-8">
                 <div class="flex flex-col items-center gap-2">
                   <AlertCircle class="h-8 w-8 text-muted-foreground" />
-                  <p class="text-muted-foreground">No cases found</p>
+                  <p class="text-muted-foreground">No orders found</p>
                 </div>
               </TableCell>
             </TableRow>
@@ -429,7 +399,7 @@ defineExpose({ refreshData });
         <div class="border-t px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <p class="text-sm text-muted-foreground">
-              Showing {{ cases.from }} to {{ cases.to }} of {{ cases.total }} entries
+              Showing {{ orders.from }} to {{ orders.to }} of {{ orders.total }} entries
             </p>
             <div class="flex items-center gap-2">
               <span class="text-sm text-muted-foreground">Show</span>
@@ -441,24 +411,23 @@ defineExpose({ refreshData });
                   <SelectItem :value="10">10</SelectItem>
                   <SelectItem :value="25">25</SelectItem>
                   <SelectItem :value="50">50</SelectItem>
-                  <SelectItem :value="100">100</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div class="flex items-center gap-1">
-            <Button variant="outline" size="sm" @click="fetchData(cases.current_page - 1)" :disabled="cases.current_page === 1 || loading">
+            <Button variant="outline" size="sm" @click="fetchData(orders.current_page - 1)" :disabled="orders.current_page === 1 || loading">
               <ChevronLeft class="h-4 w-4" />
             </Button>
 
             <template v-for="(page, index) in pageNumbers" :key="index">
               <Button 
                 v-if="page !== '...'" 
-                variant="outline"
-                size="sm"
+                variant="outline" 
+                size="sm" 
                 @click="fetchData(page)" 
-                :class="cases.current_page === page ? 'bg-primary text-primary-foreground' : ''"
+                :class="orders.current_page === page ? 'bg-primary text-primary-foreground' : ''"
                 :disabled="loading"
               >
                 {{ page }}
@@ -466,7 +435,7 @@ defineExpose({ refreshData });
               <span v-else class="px-2 text-muted-foreground">...</span>
             </template>
 
-            <Button variant="outline" size="sm" @click="fetchData(cases.current_page + 1)" :disabled="cases.current_page === cases.last_page || loading">
+            <Button variant="outline" size="sm" @click="fetchData(orders.current_page + 1)" :disabled="orders.current_page === orders.last_page || loading">
               <ChevronRight class="h-4 w-4" />
             </Button>
           </div>
@@ -474,16 +443,15 @@ defineExpose({ refreshData });
       </CardContent>
     </Card>
 
-    <EditCaseDialog v-model:open="showEditModal" :case-data="currentCase" @saved="refreshData" />
-    <DeleteCaseDialog v-model:open="showDeleteDialog" :case-id="deleteId" @deleted="refreshData" />
+    <EditOrderDialog v-model:open="showEditModal" :order-data="currentOrder" @saved="refreshData" />
+    <DeleteOrderDialog v-model:open="showDeleteDialog" :order-id="deleteId" @deleted="refreshData" />
 
     <AlertDialog v-model:open="showBulkDeleteDialog">
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete 
-            <strong>{{ selectedIds.length }} record(s)</strong> from the system.
+            This action cannot be undone. This will permanently delete <strong>{{ selectedIds.length }} selected records</strong> from the system.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
