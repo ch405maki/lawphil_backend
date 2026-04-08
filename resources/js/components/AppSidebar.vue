@@ -28,7 +28,7 @@ const reportItems = ref([
         icon: BarChart3,
         children: [
             { title: 'Case Stats', href: '#' },
-            { title: 'User Logs', href: '#' },
+            { title: 'Activity Logs', href: '/logs' },
         ],
     },
 ]);
