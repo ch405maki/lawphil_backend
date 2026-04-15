@@ -16,9 +16,16 @@ class JurisprudenceImportController extends Controller
     public function import(Request $request)
     {
         try {
+            // Increase limits for large file processing
+            set_time_limit(600); // 10 minutes
+            ini_set('memory_limit', '2048M');
+            
+            // Increase max file size for 13MB file (20MB limit)
+            $maxFileSize = 20480; // 20MB in KB
+            
             // Validate request
             $validator = Validator::make($request->all(), [
-                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+                'file' => 'required|file|mimes:xlsx,xls,csv|max:' . $maxFileSize,
             ]);
 
             if ($validator->fails()) {
@@ -31,6 +38,12 @@ class JurisprudenceImportController extends Controller
 
             $file = $request->file('file');
             
+            // Log start of import
+            Log::info('Starting jurisprudence import', [
+                'file_size' => $file->getSize(),
+                'file_name' => $file->getClientOriginalName()
+            ]);
+            
             // Create import instance
             $import = new JurisprudenceImport($file, 1); // Hardcoded user_id for now
             
@@ -42,6 +55,13 @@ class JurisprudenceImportController extends Controller
             if ($result['failed_count'] > 0) {
                 $message .= " with {$result['failed_count']} error(s)";
             }
+            
+            // Log completion
+            Log::info('Import completed', [
+                'imported' => $result['imported'],
+                'total_rows' => $result['total_rows'],
+                'failed_count' => $result['failed_count']
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -94,6 +114,7 @@ class JurisprudenceImportController extends Controller
             $sheet->setCellValue('K4', 'PDF Availability: Yes/No, True/False, 1/0 (blank defaults to 0/No)');
             $sheet->setCellValue('K5', 'All other fields (citation, ponente, reference, url, subject) are optional');
             $sheet->setCellValue('K6', 'Empty fields will be stored as NULL in database');
+            $sheet->setCellValue('K7', 'Maximum file size: 20MB (supports up to 100,000+ rows)');
             
             // Add example data
             $examples = [
@@ -115,7 +136,7 @@ class JurisprudenceImportController extends Controller
                 'F3' => '',
                 'G3' => 'No',
                 'H3' => '',
-                'I3' => '/uploads/pdfs/case_123456.pdf',
+                'I3' => '',
                 
                 'A4' => 'G.R. No. 123458',
                 'B4' => '2024-03-10',
@@ -170,5 +191,18 @@ class JurisprudenceImportController extends Controller
                 'message' => 'Failed to generate template: ' . $e->getMessage()
             ], 500);
         }
+    }
+    
+    /**
+     * Get import status (for large imports if using queue)
+     */
+    public function getImportStatus($importId)
+    {
+        // This is optional - implement if you want to track progress
+        // You would need to store progress in cache or database
+        return response()->json([
+            'success' => true,
+            'message' => 'Import status endpoint - implement as needed'
+        ]);
     }
 }

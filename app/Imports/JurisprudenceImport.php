@@ -16,6 +16,8 @@ class JurisprudenceImport
     protected $imported = 0;
     protected $errors = [];
     protected $totalRows = 0;
+    protected $batchSize = 500; // Insert 500 records at once
+    protected $batchData = [];
     
     /**
      * Constructor
@@ -23,7 +25,11 @@ class JurisprudenceImport
     public function __construct($file, $userId = null)
     {
         $this->file = $file;
-        $this->userId = $userId ?? 1; // Default to 1 if no user ID
+        $this->userId = $userId ?? 1;
+        
+        // Increase execution limits
+        set_time_limit(600); // 10 minutes
+        ini_set('memory_limit', '2048M');
     }
     
     /**
@@ -32,23 +38,46 @@ class JurisprudenceImport
     public function import()
     {
         try {
-            // Load the spreadsheet
-            $spreadsheet = IOFactory::load($this->file->getPathname());
+            // Use read filter to only read data (skip formatting)
+            $reader = IOFactory::createReaderForFile($this->file->getPathname());
+            $reader->setReadDataOnly(true);
+            
+            // Load only the active sheet
+            $spreadsheet = $reader->load($this->file->getPathname());
             $worksheet = $spreadsheet->getActiveSheet();
-            $rows = $worksheet->toArray();
             
-            // Remove header row
-            $header = array_shift($rows);
-            $this->totalRows = count($rows);
+            // Get highest row number
+            $highestRow = $worksheet->getHighestRow();
+            $this->totalRows = $highestRow - 1; // Subtract header
             
-            // Validate headers
-            $this->validateHeaders($header);
+            // Validate headers first
+            $headerRow = $worksheet->rangeToArray('A1:I1', NULL, TRUE, FALSE)[0];
+            $this->validateHeaders($headerRow);
             
             DB::beginTransaction();
             
             try {
-                foreach ($rows as $rowIndex => $row) {
-                    $this->processRow($row, $rowIndex + 2); // +2 for header and zero-index
+                // Process in chunks using rangeToArray
+                $chunkSize = 1000; // Read 1000 rows at a time
+                
+                for ($startRow = 2; $startRow <= $highestRow; $startRow += $chunkSize) {
+                    $endRow = min($startRow + $chunkSize - 1, $highestRow);
+                    
+                    // Read chunk of rows
+                    $rows = $worksheet->rangeToArray(
+                        'A' . $startRow . ':I' . $endRow,
+                        NULL,
+                        TRUE,
+                        FALSE
+                    );
+                    
+                    foreach ($rows as $rowIndex => $row) {
+                        $rowNumber = $startRow + $rowIndex;
+                        $this->processRowForBatch($row, $rowNumber);
+                    }
+                    
+                    // Insert remaining batch data
+                    $this->flushBatch();
                 }
                 
                 DB::commit();
@@ -58,7 +87,7 @@ class JurisprudenceImport
                     'imported' => $this->imported,
                     'total_rows' => $this->totalRows,
                     'failed_count' => count($this->errors),
-                    'errors' => $this->errors
+                    'errors' => array_slice($this->errors, 0, 100) // Return first 100 errors only
                 ];
                 
             } catch (\Exception $e) {
@@ -69,13 +98,19 @@ class JurisprudenceImport
         } catch (\Exception $e) {
             Log::error('Import failed: ' . $e->getMessage());
             throw $e;
+        } finally {
+            // Free memory
+            if (isset($spreadsheet)) {
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet);
+            }
         }
     }
     
     /**
-     * Process a single row
+     * Process a single row for batch insertion
      */
-    protected function processRow($row, $rowNumber)
+    protected function processRowForBatch($row, $rowNumber)
     {
         try {
             // Skip empty rows
@@ -109,8 +144,8 @@ class JurisprudenceImport
                 $pdfAvailabilityBool = $this->parseBoolean($pdfAvailability);
             }
             
-            // Prepare data
-            $data = [
+            // Prepare data for batch insert
+            $this->batchData[] = [
                 'user_id' => $this->userId,
                 'gr_number' => $grNumber,
                 'date' => $processedDate,
@@ -121,15 +156,43 @@ class JurisprudenceImport
                 'pdf_availability' => $pdfAvailabilityBool,
                 'subject' => !empty($subject) ? $subject : null,
                 'pdf_path' => !empty($pdf_path) ? $pdf_path : null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
             
-            // Create record
-            Jurisprudence::create($data);
-            $this->imported++;
+            // If batch size reached, insert
+            if (count($this->batchData) >= $this->batchSize) {
+                $this->flushBatch();
+            }
             
         } catch (\Exception $e) {
             $this->errors[] = $e->getMessage();
             Log::warning('Row import failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Insert batch data into database
+     */
+    protected function flushBatch()
+    {
+        if (empty($this->batchData)) {
+            return;
+        }
+        
+        try {
+            // Use insert instead of create for each record
+            DB::table('jurisprudence')->insert($this->batchData);
+            $this->imported += count($this->batchData);
+            $this->batchData = [];
+            
+            // Log progress every 5000 records
+            if ($this->imported % 5000 === 0) {
+                Log::info("Imported {$this->imported} records so far...");
+            }
+        } catch (\Exception $e) {
+            Log::error('Batch insert failed: ' . $e->getMessage());
+            throw $e;
         }
     }
     
@@ -153,8 +216,8 @@ class JurisprudenceImport
     protected function validateHeaders($header)
     {
         $expectedHeaders = [
-            'gr_number',
-            'date',
+            'gr_number*',
+            'date*',
             'citation',
             'ponente',
             'reference',
@@ -166,16 +229,15 @@ class JurisprudenceImport
         
         $errors = [];
         
-        // Clean headers (trim and lowercase, remove asterisk)
+        // Clean headers
         $cleanHeaders = array_map(function($headerItem) {
-            $headerItem = trim($headerItem);
-            $headerItem = rtrim($headerItem, '*');
-            return strtolower($headerItem);
+            return strtolower(trim($headerItem ?? ''));
         }, $header);
         
         // Check if all expected headers are present
         foreach ($expectedHeaders as $index => $expected) {
-            if (!isset($cleanHeaders[$index]) || $cleanHeaders[$index] !== $expected) {
+            $expectedClean = strtolower($expected);
+            if (!isset($cleanHeaders[$index]) || $cleanHeaders[$index] !== $expectedClean) {
                 $errors[] = "Column " . ($index + 1) . " should be '{$expected}' but found '" . ($cleanHeaders[$index] ?? 'empty') . "'";
             }
         }
@@ -243,18 +305,5 @@ class JurisprudenceImport
         }
         
         return $value;
-    }
-    
-    /**
-     * Get import statistics
-     */
-    public function getStatistics()
-    {
-        return [
-            'imported' => $this->imported,
-            'total_rows' => $this->totalRows,
-            'failed_count' => count($this->errors),
-            'errors' => $this->errors
-        ];
     }
 }
