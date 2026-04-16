@@ -16,6 +16,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
+    Route::get('/logs', function () {   
+        return Inertia::render('Log/Index');
+    })->name('logs');
+
     // jurisprudence
     Route::prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');

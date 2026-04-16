@@ -343,7 +343,7 @@ const bulkDelete = async () => {
   }
 };
 
-const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
 
 const refreshData = () => {
     selectAllAcrossPages.value = false;
