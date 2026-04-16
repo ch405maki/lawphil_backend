@@ -15,7 +15,7 @@ Route::get('/user', function (Request $request) {
 // Jurisprudence Management
 Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
 
-Route::middleware('auth:sanctum')->prefix('jurisprudence')->group(function () {
+Route::middleware('web', 'auth')->prefix('jurisprudence')->group(function () {
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
