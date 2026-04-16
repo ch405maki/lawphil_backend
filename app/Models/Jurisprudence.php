@@ -8,7 +8,7 @@ use Spatie\Activitylog\LogOptions;
 
 class Jurisprudence extends Model
 {
-    use LogsActivity; // ✅ THIS ENABLES LOGGING
+    use LogsActivity;
 
     protected $table = 'jurisprudence';
 
