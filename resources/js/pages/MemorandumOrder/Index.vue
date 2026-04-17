@@ -4,9 +4,9 @@ import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 
-// Custom Components
-import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
-import JurisprudenceTable from '@/components/jurisprudence/JurisprudenceTable.vue';
+// Custom Components - Pinalitan natin ang folder at component name!
+import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue'; // Pwede mong i-reuse ito kung generic siya!
+import MemorandumOrderTable from '@/components/memorandum-orders/MemorandumOrderTable.vue';
 
 // Icons
 import { FileSpreadsheet, Plus } from 'lucide-vue-next';
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 
 const breadcrumbs = [ 
   { title: "Dashboard", href: "/dashboard" }, 
-  { title: "Jurisprudence", href: "#" }
+  { title: "Memorandum Orders", href: "#" }
 ];
 
 // Refresh trigger
@@ -37,25 +37,24 @@ const refreshTable = () => {
 };
 
 const goToCreate = () => {
-    window.location.href = '/jurisprudence/create';
+    window.location.href = '/memorandum-orders/create';
 };
 </script>
 
 <template>
-    <Head title="Jurisprudence" />
+    <Head title="Memorandum Orders" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="min-h-screen bg-background p-4">
-            <!-- Header -->
             <div class="mb-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Jurisprudence Bank</h1>
+                        <h1 class="text-2xl font-bold tracking-tight">Memorandum Orders</h1>
                         <p class="text-muted-foreground">Legal Archives Management System</p>
                     </div>
                     <div class="flex gap-2">
                         <ExcelImportDialog 
-                            title="Jurisprudence"
-                            import-url="/api/v1/jurisprudence/import"
+                            title="Memorandum Orders"
+                            import-url="/api/v1/memorandum-orders/import"
                             trigger-text="Import Excel/CSV"
                             trigger-variant="outline"
                             :trigger-icon="FileSpreadsheet"
@@ -64,14 +63,13 @@ const goToCreate = () => {
                         />
                         <Button @click="goToCreate" class="gap-2">
                             <Plus class="h-4 w-4" />
-                            Add New Case
+                            Add New Order
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <!-- Jurisprudence Table Component -->
-            <JurisprudenceTable :refresh-trigger="refreshTrigger" @refresh="refreshTable" />
+            <MemorandumOrderTable :refresh-trigger="refreshTrigger" @refresh="refreshTable" />
         </div>
     </AppLayout>
 </template>
