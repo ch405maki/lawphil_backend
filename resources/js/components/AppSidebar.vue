@@ -9,7 +9,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { LayoutGrid, UserRoundCog, Gavel, FileUp, FileText, BarChart3 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
-const user = usePage().props.auth.user;
+const user = (usePage().props as any).auth?.user;
 
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
@@ -20,9 +20,10 @@ const mainNavItems: NavItem[] = [
         icon: FileText,
         children: [
             { title: 'Presidential Decrees', href: route('dashboard') }, 
-            { title: 'Executive Orders', href: route('dashboard') },
+            // Ito ang binago natin:
+            { title: 'Executive Orders', href: route('executive-orders.index') },
+            { title: 'Memorandum Circulars', href: route('memorandum-circulars.index') },
             { title: 'Memorandum Orders', href: route('memorandum-orders.index') },
-            { title: 'Memorandum Circulars', href: route('general-orders.index') },
             { title: 'Administrative Orders', href: route('administrative.index') },
             { title: 'Proclamations', href: route('dashboard') },
             { title: 'General Orders', href: route('general-orders.index') },

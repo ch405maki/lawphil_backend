@@ -8,13 +8,12 @@ use App\Http\Controllers\Api\v1\ProfilePictureController;
 // Jurisprudence Controllers
 use App\Http\Controllers\Api\v1\JurisprudenceController;
 use App\Http\Controllers\Api\v1\JurisprudenceImportController;
+use App\Http\Controllers\Api\v1\ExecutiveOrderImportController;
+use App\Http\Controllers\Api\v1\MemorandumCircularController;
 use App\Http\Controllers\Api\v1\MemorandumOrderController;
 use App\Http\Controllers\Api\v1\GeneralOrderController;
-// BAGO: Import Controllers
 use App\Http\Controllers\Api\v1\MemorandumOrderImportController;
 use App\Http\Controllers\Api\v1\GeneralOrderImportController;
-
-// Administrative Order Controllers
 use App\Http\Controllers\Api\v1\AdministrativeOrderController;
 use App\Http\Controllers\Api\v1\AdministrativeOrderImportController;
 
@@ -31,6 +30,24 @@ Route::prefix('jurisprudence')->group(function () {
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
+});
+
+// Executive Order Management
+Route::prefix('executive-orders')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\v1\ExecutiveOrderController::class, 'index']);
+    Route::post('/', [App\Http\Controllers\Api\v1\ExecutiveOrderController::class, 'store']);
+    Route::post('/bulk-delete', [App\Http\Controllers\Api\v1\ExecutiveOrderController::class, 'bulkDelete']);
+    Route::post('/{id}', [App\Http\Controllers\Api\v1\ExecutiveOrderController::class, 'update']);
+    Route::delete('/{id}', [App\Http\Controllers\Api\v1\ExecutiveOrderController::class, 'destroy']);
+});
+
+// Memorandum Circular Management
+Route::prefix('memorandum-circulars')->group(function () {
+    Route::get('/', [MemorandumCircularController::class, 'index']);
+    Route::post('/', [MemorandumCircularController::class, 'store']);
+    Route::post('/bulk-delete', [MemorandumCircularController::class, 'bulkDelete']);
+    Route::post('/{id}', [MemorandumCircularController::class, 'update']);
+    Route::delete('/{id}', [MemorandumCircularController::class, 'destroy']);
 });
 
 // Memorandum Orders Management
@@ -78,6 +95,13 @@ Route::prefix('v1')->group(function () {
     // Jurisprudence Imports
     Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import']);
     Route::get('/jurisprudence/import/template', [JurisprudenceImportController::class, 'downloadTemplate']);
+
+    Route::post('/executive-orders/import', [ExecutiveOrderImportController::class, 'import']);
+    Route::get('/executive-orders/import/template', [ExecutiveOrderImportController::class, 'downloadTemplate']);
+});
+
+
+// User Management
     
     // Memorandum Orders Import (BAGO)
     Route::post('/memorandum-orders/import', [MemorandumOrderImportController::class, 'import']);
