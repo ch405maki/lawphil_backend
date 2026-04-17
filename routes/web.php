@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\JurisprudenceController;
 // Heto yung idinagdag natin na imports
 use App\Http\Controllers\Web\MemorandumOrderController;
 use App\Http\Controllers\Web\GeneralOrderController;
+use App\Http\Controllers\Web\AdministrativeOrderController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -36,6 +37,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [GeneralOrderController::class, 'index'])->name('general-orders.index');
         Route::get('/create', [GeneralOrderController::class, 'create'])->name('general-orders.create');
     });
+    // administrative order
+    Route::prefix('administrative')->group(function () {
+    Route::get('/', [AdministrativeOrderController::class, 'index'])->name('administrative.index');
+    Route::get('/create', [AdministrativeOrderController::class, 'create'])->name('administrative.create');
+    });
+
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');

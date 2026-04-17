@@ -14,7 +14,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 const toast = useToast();
 
-// Form data
+const subjectOptions = [
+  'Political and Constitutional Law',
+  'Labor Law and Social Legislation',
+  'Civil Law',
+  'Taxation Law',
+  'Mercantile and Commercial Law',
+  'Criminal Law',
+  'Remedial Law',
+  'Legal and Judicial Ethics',
+  'Administrative Law',
+  'Contract and Obligations',
+  'Property and Real Estate Law',
+  'Family Law',
+  'Public and Private International Law',
+  'Environmental and Natural Resources Law'
+];
+
 const formData = reactive({
   gr_number: '',
   date: '',
@@ -27,7 +43,6 @@ const formData = reactive({
   pdf_path: ''
 });
 
-// Form validation errors
 const errors = reactive({
   gr_number: '',
   date: '',
@@ -41,22 +56,17 @@ const errors = reactive({
 
 const isLoading = ref(false);
 
-// Validate form
 const validateForm = () => {
   let isValid = true;
-  
-  // Reset errors
   Object.keys(errors).forEach(key => {
     errors[key] = '';
   });
   
-  // Validate GR Number
   if (!formData.gr_number.trim()) {
     errors.gr_number = 'GR Number is required';
     isValid = false;
   }
   
-  // Validate Date
   if (!formData.date) {
     errors.date = 'Date is required';
     isValid = false;
@@ -65,7 +75,6 @@ const validateForm = () => {
   return isValid;
 };
 
-// Clear form fields
 const clearForm = () => {
   formData.gr_number = '';
   formData.date = '';
@@ -77,13 +86,11 @@ const clearForm = () => {
   formData.subject = '';
   formData.pdf_path = '';
   
-  // Reset errors
   Object.keys(errors).forEach(key => {
     errors[key] = '';
   });
 };
 
-// Submit form
 const submitForm = async () => {
   if (!validateForm()) {
     toast.error('Please fix the validation errors');
@@ -109,10 +116,7 @@ const submitForm = async () => {
     }
     
   } catch (error: any) {
-    console.error('Error creating jurisprudence:', error);
-    
     if (error.response?.data?.errors) {
-      // Handle validation errors from server
       const validationErrors = error.response.data.errors;
       Object.keys(validationErrors).forEach(key => {
         if (errors[key] !== undefined) {
@@ -129,7 +133,6 @@ const submitForm = async () => {
   }
 };
 
-// Reset form (clear all fields and errors)
 const resetForm = () => {
   clearForm();
   toast.info('Form has been reset');
@@ -138,8 +141,50 @@ const resetForm = () => {
 
 <template>
   <div>
-    <form @submit.prevent="submitForm" class="space-y-4">
-      <!-- GR Number, Date Row and Ref -->
+    <form @submit.prevent="submitForm" class="space-y-6">
+      <div class="space-y-2">
+        <Label for="citation">Citation / Case Title</Label>
+        <Textarea
+          id="citation"
+          v-model="formData.citation"
+          placeholder="e.g., People of the Philippines vs. Juan Dela Cruz"
+          :disabled="isLoading"
+          :class="{ 'border-red-500': errors.citation }"
+          rows="2"
+        />
+        <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label for="ponente">Ponente</Label>
+          <Input
+            id="ponente"
+            v-model="formData.ponente"
+            placeholder="e.g., Justice Dela Cruz"
+            :disabled="isLoading"
+            :class="{ 'border-red-500': errors.ponente }"
+          />
+          <p v-if="errors.ponente" class="text-sm text-red-500">{{ errors.ponente }}</p>
+        </div>
+        <div>
+          <Label for="subject">Subject Area</Label>
+          <select
+            id="subject"
+            v-model="formData.subject"
+            :disabled="isLoading"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            :class="{ 'border-red-500': errors.subject }"
+          >
+            <option value="" disabled>Select the law subject or category</option>
+            <option v-for="option in subjectOptions" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </select>
+          <p v-if="errors.subject" class="text-sm text-red-500">{{ errors.subject }}</p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label for="gr_number">
@@ -170,7 +215,7 @@ const resetForm = () => {
         </div>
 
         <div>
-          <Label for="reference">Reference</Label>
+          <Label for="reference">Reference / Volume</Label>
           <Input
             id="reference"
             v-model="formData.reference"
@@ -182,64 +227,20 @@ const resetForm = () => {
         </div>
       </div>
       
-      <!-- Url and Ponente Row -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <Label for="url">URL</Label>
-            <Input
-                id="url"
-                v-model="formData.url"
-                type="text"
-                placeholder="Enter URL or Rel. Path"
-                :disabled="isLoading"
-                :class="{ 'border-red-500': errors.url }"
-            />
-            <p v-if="errors.url" class="text-sm text-red-500">{{ errors.url }}</p>
-        </div>
-        <div>
-          <Label for="ponente">Ponente</Label>
+      <div class="space-y-2">
+          <Label for="url">Source URL</Label>
           <Input
-            id="ponente"
-            v-model="formData.ponente"
-            placeholder="e.g., Justice Dela Cruz"
-            :disabled="isLoading"
-            :class="{ 'border-red-500': errors.ponente }"
+              id="url"
+              v-model="formData.url"
+              type="text"
+              placeholder="e.g., https://lawphil.net/judjuris/..."
+              :disabled="isLoading"
+              :class="{ 'border-red-500': errors.url }"
           />
-          <p v-if="errors.ponente" class="text-sm text-red-500">{{ errors.ponente }}</p>
-        </div>
+          <p v-if="errors.url" class="text-sm text-red-500">{{ errors.url }}</p>
       </div>
         
-      <!-- Citation -->
-      <div class="grid grid-cols-1 gap-4">
-        <div>
-          <Label for="citation">Citation</Label>
-          <Textarea
-            id="citation"
-            v-model="formData.citation"
-            placeholder="e.g., 123 SCRA 456"
-            :disabled="isLoading"
-            :class="{ 'border-red-500': errors.citation }"
-          />
-          <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
-        </div>
-      </div>
-      
-      <!-- Subject -->
-      <div>
-        <Label for="subject">Subject</Label>
-        <Textarea
-          id="subject"
-          v-model="formData.subject"
-          placeholder="Enter the subject or topic of the case"
-          :disabled="isLoading"
-          rows="3"
-          :class="{ 'border-red-500': errors.subject }"
-        />
-        <p v-if="errors.subject" class="text-sm text-red-500">{{ errors.subject }}</p>
-      </div>
-      
-      <!-- PDF Availability Section - Inline with wider input -->
-      <div class="space-y-2">
+      <div class="p-4 border rounded-lg bg-slate-50/50">
           <div class="flex items-start gap-4">
               <div class="flex items-center space-x-2 pt-2">
                   <Checkbox
@@ -247,39 +248,38 @@ const resetForm = () => {
                       v-model:checked="formData.pdf_availability"
                       :disabled="isLoading"
                   />
-                  <Label for="pdf_availability" class="cursor-pointer">
+                  <Label for="pdf_availability" class="cursor-pointer font-medium">
                       PDF Available
                   </Label>
               </div>
               
-              <div class="flex-1">
+              <div class="flex-1 space-y-2">
                   <Input
                       id="pdf_path"
                       v-model="formData.pdf_path"
                       type="text"
-                      placeholder="Enter PDF path or URL (e.g., /uploads/pdfs/case.pdf)"
+                      placeholder="Enter path (e.g., /storage/juris/case_123.pdf)"
                       :disabled="isLoading || !formData.pdf_availability"
                       :class="{ 'border-red-500': errors.pdf_path }"
-                      class="w-full"
+                      class="w-full bg-white"
                   />
                   <p v-if="errors.pdf_path" class="text-sm text-red-500 mt-1">{{ errors.pdf_path }}</p>
                   <p v-if="formData.pdf_availability" class="text-xs text-muted-foreground mt-1">
-                      You can enter a relative path or full URL to the PDF file
+                      Provide the relative path or direct link to the document.
                   </p>
               </div>
           </div>
       </div>
       
-      <!-- Form Actions -->
-      <div class="flex gap-2 justify-between border-t pt-6 mt-6">
-        <p class="text-sm text-muted-foreground">
-            <span class="text-red-500">*</span> Required fields. All other fields are optional and will be stored as NULL if empty.
+      <div class="flex flex-col md:flex-row gap-4 justify-between border-t pt-6">
+        <p class="text-xs text-muted-foreground italic self-center">
+            <span class="text-red-500">*</span> Required fields: GR Number and Date.
         </p>
         <div class="flex gap-2">
             <Button 
                 type="submit" 
                 :disabled="isLoading"
-                class="gap-2"
+                class="gap-2 px-6"
                 >
                 <Save class="h-4 w-4" />
                 {{ isLoading ? 'Creating...' : 'Create Record' }}

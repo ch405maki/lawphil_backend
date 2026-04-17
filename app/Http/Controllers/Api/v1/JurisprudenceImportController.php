@@ -99,33 +99,13 @@ class JurisprudenceImportController extends Controller
             $examples = [
                 'A2' => 'G.R. No. 123456',
                 'B2' => '2024-01-15',
-                'C2' => '123 SCRA 456',
+                'C2' => 'People of the Philippines vs. Juan Dela Cruz',
                 'D2' => 'Justice Dela Cruz',
-                'E2' => 'Some reference',
+                'E2' => '123 SCRA 456',
                 'F2' => 'https://example.com/case',
                 'G2' => 'Yes',
                 'H2' => 'Civil Law',
                 'I2' => '/uploads/pdfs/case_123456.pdf',
-                
-                'A3' => 'G.R. No. 123457',
-                'B3' => '2024-02-20',
-                'C3' => '',
-                'D3' => '',
-                'E3' => '',
-                'F3' => '',
-                'G3' => 'No',
-                'H3' => '',
-                'I3' => '/uploads/pdfs/case_123456.pdf',
-                
-                'A4' => 'G.R. No. 123458',
-                'B4' => '2024-03-10',
-                'C4' => '',
-                'D4' => '',
-                'E4' => '',
-                'F4' => '',
-                'G4' => '',
-                'H4' => '',
-                'I4' => '',
             ];
             
             foreach ($examples as $cell => $value) {
