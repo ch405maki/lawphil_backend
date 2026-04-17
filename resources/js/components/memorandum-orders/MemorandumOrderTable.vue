@@ -35,13 +35,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// Custom Components
+// Custom Components - Pansamantala nating gagamitin yung sa jurisprudence na dialogs, 
+// mamaya i-a-adjust din natin ito kung kailangan
 import EditCaseDialog from '@/components/jurisprudence/EditCaseDialog.vue';
 import DeleteCaseDialog from '@/components/jurisprudence/DeleteCaseDialog.vue';
 
 // Icons
 import {
   Search,
+  Plus,
   Trash2,
   SquarePen,
   SquareArrowOutUpRight,
@@ -66,13 +68,20 @@ const emit = defineEmits<{
 }>();
 
 // Data state
-const cases = ref<any>({
-  data: [],
-  current_page: 1,
-  last_page: 1,
-  from: 0,
-  to: 0,
-  total: 0
+const cases = ref({
+  data: [
+    {
+      id: 1,
+      mo_number: "TEST-2026-001",
+      date: "2026-04-07",
+      citation: "Sample Memorandum Order Title for Testing",
+      signatory: "John Dave Leongson",
+      reference: "REF-001",
+      url: "https://lawphil.net",
+      pdf_availability: true, 
+      pdf_path: "/test.pdf"
+    }
+  ],
 });
 
 const search = ref('');
@@ -85,6 +94,8 @@ const isSearching = ref(false);
 
 // Multiple deletion state
 const selectedIds = ref<number[]>([]);
+const selectAllAcrossPages = ref(false);
+const totalFiltered = ref(0);
 const showBulkDeleteDialog = ref(false);
 const bulkDeleting = ref(false);
 
@@ -94,19 +105,20 @@ const filterState = reactive({
     rows: 10
 });
 
+// Pinalitan ang gr_number ng mo_number at ponente ng signatory
 const currentCase = ref({
     id: null,
-    gr_number: '',
+    mo_number: '', 
     date: '',
     citation: '',
-    ponente: '',
+    signatory: '', 
     reference: '',
     url: '',
     pdf_availability: false,
     pdf_path: ''
 });
 
-// Helper functions
+// Helper function to generate PDF URL from HTML URL
 const generatePdfUrl = (url: string) => {
   if (!url) return null;
   if (url.startsWith('http')) {
@@ -123,19 +135,26 @@ const generatePdfUrl = (url: string) => {
   return `https://lawphil.net/judjuris/${basePath}/pdf/${pdfFileName}`;
 };
 
+// Helper function to generate HTML URL from relative path
 const generateHtmlUrl = (url: string) => {
   if (!url) return null;
-  return url.startsWith('http') ? url : `https://lawphil.net/judjuris/${url}`;
+  if (url.startsWith('http')) return url;
+  return `https://lawphil.net/judjuris/${url}`;
 };
 
-// Computed properties for multiple deletion
 const isAllSelectedOnPage = computed(() => {
-  return cases.value.data?.length > 0 && 
-         cases.value.data.every((item: any) => selectedIds.value.includes(item.id));
+  return cases.value.data?.length > 0 && selectedIds.value.length === cases.value.data?.length;
 });
 
 const isSomeSelected = computed(() => {
-  return selectedIds.value.length > 0 && !isAllSelectedOnPage.value;
+  return selectedIds.value.length > 0 && selectedIds.value.length < cases.value.data?.length;
+});
+
+const selectedCountText = computed(() => {
+  if (selectAllAcrossPages.value) {
+    return `All ${totalFiltered.value} records`;
+  }
+  return `${selectedIds.value.length} record(s)`;
 });
 
 let searchTimeout: ReturnType<typeof setTimeout>;
@@ -170,8 +189,10 @@ const pageNumbers = computed(() => {
 
 const fetchData = async (page = 1, signal?: AbortSignal) => {
   if (!signal) loading.value = true;
+  
   try {
-    const response = await axios.get('/api/jurisprudence', {
+    // Pinalitan ang API endpoint
+    const response = await axios.get('/api/memorandum-orders', {
       params: {
         search: search.value,
         page: page,
@@ -181,11 +202,15 @@ const fetchData = async (page = 1, signal?: AbortSignal) => {
       },
       signal: signal
     });
+    
     cases.value = response.data;
+    totalFiltered.value = response.data.total;
+    
+    if (!selectAllAcrossPages.value) selectedIds.value = [];
   } catch (error: any) {
     if (error.name !== 'AbortError' && error.code !== 'ERR_CANCELED') {
       console.error('Error fetching data:', error);
-      toast.error('Failed to fetch jurisprudence data');
+      toast.error('Failed to fetch memorandum orders data');
     }
   } finally {
     if (!signal) loading.value = false;
@@ -195,6 +220,7 @@ const fetchData = async (page = 1, signal?: AbortSignal) => {
 };
 
 watch([() => filterState.year, () => filterState.sort, () => filterState.rows], () => {
+  selectAllAcrossPages.value = false;
   selectedIds.value = [];
   if (currentAbortController) currentAbortController.abort();
   currentAbortController = new AbortController();
@@ -222,37 +248,52 @@ const toggleSelectAllOnPage = () => {
     );
   } else {
     const pageIds = cases.value.data.map((item: any) => item.id);
-    selectedIds.value = [...new Set([...selectedIds.value, ...pageIds])];
+    const newIds = [...new Set([...selectedIds.value, ...pageIds])];
+    selectedIds.value = newIds;
   }
+  selectAllAcrossPages.value = false;
+};
+
+const toggleSelectAllAcrossPages = () => {
+  selectAllAcrossPages.value = !selectAllAcrossPages.value;
+  selectedIds.value = [];
 };
 
 const toggleSelect = (id: number) => {
+  if (selectAllAcrossPages.value) selectAllAcrossPages.value = false;
   const index = selectedIds.value.indexOf(id);
-  index > -1 ? selectedIds.value.splice(index, 1) : selectedIds.value.push(id);
+  if (index > -1) selectedIds.value.splice(index, 1);
+  else selectedIds.value.push(id);
 };
 
 const bulkDelete = async () => {
   bulkDeleting.value = true;
   try {
-    const response = await axios.post('/api/jurisprudence/bulk-delete', {
-      ids: selectedIds.value,
-      select_all: false
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      }
-    });
+    let response;
+    // Pinalitan ang API endpoint
+    const url = '/api/memorandum-orders/bulk-delete';
+    
+    if (selectAllAcrossPages.value) {
+      response = await axios.post(url, {
+        select_all: true,
+        filters: { search: search.value, year: filterState.year, sort: filterState.sort }
+      });
+    } else {
+      response = await axios.post(url, { ids: selectedIds.value, select_all: false });
+    }
 
     if (response.data.success) {
       toast.success(`Successfully deleted ${response.data.deleted_count} record(s)`);
       showBulkDeleteDialog.value = false;
+      selectAllAcrossPages.value = false;
       selectedIds.value = [];
       fetchData(cases.value.current_page);
       emit('refresh');
+    } else {
+      throw new Error(response.data.message || 'Failed to delete records');
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || 'Failed to delete records');
+    toast.error(error.response?.data?.message || error.message || 'Failed to delete records');
   } finally {
     bulkDeleting.value = false;
   }
@@ -261,6 +302,7 @@ const bulkDelete = async () => {
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
 
 const refreshData = () => {
+    selectAllAcrossPages.value = false;
     selectedIds.value = [];
     fetchData(cases.value.current_page);
     emit('refresh');
@@ -269,13 +311,14 @@ const refreshData = () => {
 const resetFilters = () => {
   Object.assign(filterState, {year: '', sort: 'latest', rows: 10});
   search.value = '';
+  selectAllAcrossPages.value = false;
   selectedIds.value = [];
   if (currentAbortController) currentAbortController.abort();
-  fetchData(1);
+  currentAbortController = new AbortController();
+  fetchData(1, currentAbortController.signal);
 };
 
 onMounted(() => fetchData());
-
 defineExpose({ refreshData });
 </script>
 
@@ -286,24 +329,16 @@ defineExpose({ refreshData });
         <div class="flex flex-wrap items-center justify-between gap-3 p-4">
           <div class="flex items-center gap-2">
             <Button 
-              v-if="selectedIds.length > 0"
-              variant="destructive" 
-              size="sm"
-              @click="showBulkDeleteDialog = true"
-              class="gap-2"
+              v-if="selectedIds.length > 0 || selectAllAcrossPages"
+              variant="destructive" size="sm" @click="showBulkDeleteDialog = true" class="gap-2"
             >
-              <Trash class="h-4 w-4" />
-              Delete Selected ({{ selectedIds.length }})
+              <Trash class="h-4 w-4" /> Delete Selected ({{ selectedCountText }})
             </Button>
             <Button 
-              v-if="selectedIds.length > 0"
-              variant="ghost" 
-              size="sm"
-              @click="() => { selectedIds = []; }"
-              class="gap-2"
+              v-if="selectedIds.length > 0 || selectAllAcrossPages"
+              variant="ghost" size="sm" @click="() => { selectedIds = []; selectAllAcrossPages = false; }" class="gap-2"
             >
-              <X class="h-4 w-4" />
-              Clear
+              <X class="h-4 w-4" /> Clear
             </Button>
           </div>
           
@@ -314,17 +349,14 @@ defineExpose({ refreshData });
                 <Loader2 v-else class="h-4 w-4 animate-spin text-primary" />
               </div>
               <Input 
-                v-model="search" 
-                @input="handleSearch"
-                placeholder="Search G.R. No. or Case Title..." 
+                v-model="search" @input="handleSearch"
+                placeholder="Search M.O. No. or Title..." 
                 class="pl-9"
               />
             </div>
             
             <Select v-model="filterState.sort" :disabled="searchLoading">
-              <SelectTrigger class="w-[130px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
+              <SelectTrigger class="w-[130px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="latest">Newest First</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
@@ -333,11 +365,10 @@ defineExpose({ refreshData });
               </SelectContent>
             </Select>
             
-            <Input v-model="filterState.year" type="number" placeholder="Year" class="w-24" :disabled="searchLoading" />
+            <Input v-model="filterState.year" type="number" placeholder="Year" class="w-24" :disabled="searchLoading"/>
             
             <Button variant="ghost" @click="resetFilters" class="gap-1" :disabled="searchLoading">
-              <RefreshCw class="h-4 w-4" />
-              <span class="hidden sm:inline">Reset</span>
+              <RefreshCw class="h-4 w-4" /><span class="hidden sm:inline">Reset</span>
             </Button>
           </div>
         </div>
@@ -346,15 +377,19 @@ defineExpose({ refreshData });
           <TableHeader>
             <TableRow>
               <TableHead class="w-12">
-                <Checkbox 
-                  :checked="isAllSelectedOnPage"
-                  :indeterminate="isSomeSelected"
-                  @click="toggleSelectAllOnPage"
-                  :disabled="loading || cases.data?.length === 0"
-                />
+                <div class="flex flex-col gap-1">
+                  <Checkbox :checked="isAllSelectedOnPage && !selectAllAcrossPages" :indeterminate="isSomeSelected && !selectAllAcrossPages" @click="toggleSelectAllOnPage" :disabled="loading || cases.data?.length === 0" />
+                  <span class="text-xs font-normal">Page</span>
+                </div>
               </TableHead>
-              <TableHead class="w-[15%]">G.R. & Date</TableHead>
-              <TableHead class="w-[40%]">Case Title</TableHead>
+              <TableHead class="w-12">
+                <div class="flex flex-col gap-1">
+                  <Checkbox :checked="selectAllAcrossPages" @click="toggleSelectAllAcrossPages" :disabled="loading || totalFiltered === 0" />
+                  <span class="text-xs font-normal">All</span>
+                </div>
+              </TableHead>
+              <TableHead class="w-[15%]">M.O. & Date</TableHead>
+              <TableHead class="w-[40%]">Title / Citation</TableHead>
               <TableHead class="w-[15%] text-center">URL</TableHead>
               <TableHead class="w-[10%] text-center">PDF</TableHead>
               <TableHead class="w-[20%] text-right">Actions</TableHead>
@@ -363,33 +398,21 @@ defineExpose({ refreshData });
           <TableBody>
             <template v-if="loading && cases.data?.length === 0">
               <TableRow v-for="i in 5" :key="i">
-                <TableCell><Skeleton class="h-4 w-4" /></TableCell>
-                <TableCell><Skeleton class="h-5 w-24" /></TableCell>
-                <TableCell><Skeleton class="h-5 w-64" /></TableCell>
-                <TableCell><Skeleton class="h-5 w-12 mx-auto" /></TableCell>
-                <TableCell><Skeleton class="h-8 w-8 rounded-full mx-auto" /></TableCell>
-                <TableCell><Skeleton class="h-8 w-16 ml-auto" /></TableCell>
+                <TableCell colspan="7" class="text-center py-4"><Skeleton class="h-8 w-full" /></TableCell>
               </TableRow>
             </template>
             
             <TableRow v-for="item in cases.data" :key="item.id" class="group">
+              <TableCell><Checkbox :checked="selectedIds.includes(item.id)" @click="toggleSelect(item.id)" :disabled="loading || selectAllAcrossPages" /></TableCell>
+              <TableCell></TableCell>
               <TableCell>
-                <Checkbox 
-                  :checked="selectedIds.includes(item.id)"
-                  @click="toggleSelect(item.id)"
-                  :disabled="loading"
-                />
-              </TableCell>
-              <TableCell>
-                <div class="font-semibold">{{ item.gr_number }}</div>
+                <div class="font-semibold">{{ item.mo_number || 'N/A' }}</div>
                 <div class="text-xs text-muted-foreground mt-1">{{ formatDate(item.date) }}</div>
               </TableCell>
               <TableCell>
-                <div class="font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                  {{ item.citation }}
-                </div>
+                <div class="font-medium line-clamp-2 group-hover:text-primary transition-colors">{{ item.citation }}</div>
                 <div class="text-xs text-muted-foreground mt-1">
-                  Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
+                  Signatory: {{ item.signatory || 'N/A' }} • Ref: {{ item.reference || 'N/A' }}
                 </div>
               </TableCell>
               <TableCell class="text-center">
@@ -406,20 +429,16 @@ defineExpose({ refreshData });
               </TableCell>
               <TableCell class="text-right">
                 <div class="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading">
-                    <SquarePen class="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" @click="confirmDelete(item.id)" :disabled="loading">
-                    <Trash2 class="h-4 w-4 text-destructive" />
-                  </Button>
+                  <Button variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading"><SquarePen class="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" @click="confirmDelete(item.id)" :disabled="loading"><Trash2 class="h-4 w-4 text-destructive" /></Button>
                 </div>
               </TableCell>
             </TableRow>
             <TableRow v-if="cases.data?.length === 0 && !loading">
-              <TableCell colspan="6" class="text-center py-8">
+              <TableCell colspan="7" class="text-center py-8">
                 <div class="flex flex-col items-center gap-2">
                   <AlertCircle class="h-8 w-8 text-muted-foreground" />
-                  <p class="text-muted-foreground">No cases found</p>
+                  <p class="text-muted-foreground">No records found</p>
                 </div>
               </TableCell>
             </TableRow>
@@ -428,15 +447,11 @@ defineExpose({ refreshData });
 
         <div class="border-t px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <p class="text-sm text-muted-foreground">
-              Showing {{ cases.from }} to {{ cases.to }} of {{ cases.total }} entries
-            </p>
+            <p class="text-sm text-muted-foreground">Showing {{ cases.from }} to {{ cases.to }} of {{ cases.total }} entries</p>
             <div class="flex items-center gap-2">
               <span class="text-sm text-muted-foreground">Show</span>
               <Select v-model="filterState.rows" :disabled="loading">
-                <SelectTrigger class="w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger class="w-[70px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem :value="10">10</SelectItem>
                   <SelectItem :value="25">25</SelectItem>
@@ -446,29 +461,13 @@ defineExpose({ refreshData });
               </Select>
             </div>
           </div>
-
           <div class="flex items-center gap-1">
-            <Button variant="outline" size="sm" @click="fetchData(cases.current_page - 1)" :disabled="cases.current_page === 1 || loading">
-              <ChevronLeft class="h-4 w-4" />
-            </Button>
-
+            <Button variant="outline" size="sm" @click="fetchData(cases.current_page - 1)" :disabled="cases.current_page === 1 || loading"><ChevronLeft class="h-4 w-4" /></Button>
             <template v-for="(page, index) in pageNumbers" :key="index">
-              <Button 
-                v-if="page !== '...'" 
-                variant="outline"
-                size="sm"
-                @click="fetchData(page)" 
-                :class="cases.current_page === page ? 'bg-primary text-primary-foreground' : ''"
-                :disabled="loading"
-              >
-                {{ page }}
-              </Button>
+              <Button v-if="page !== '...'" variant="outline" size="sm" @click="fetchData(page)" :class="cases.current_page === page ? 'bg-primary text-primary-foreground' : ''" :disabled="loading">{{ page }}</Button>
               <span v-else class="px-2 text-muted-foreground">...</span>
             </template>
-
-            <Button variant="outline" size="sm" @click="fetchData(cases.current_page + 1)" :disabled="cases.current_page === cases.last_page || loading">
-              <ChevronRight class="h-4 w-4" />
-            </Button>
+            <Button variant="outline" size="sm" @click="fetchData(cases.current_page + 1)" :disabled="cases.current_page === cases.last_page || loading"><ChevronRight class="h-4 w-4" /></Button>
           </div>
         </div>
       </CardContent>
@@ -482,15 +481,14 @@ defineExpose({ refreshData });
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete 
-            <strong>{{ selectedIds.length }} record(s)</strong> from the system.
+            This action cannot be undone. This will permanently delete <strong>{{ selectedCountText }}</strong> from the system.
+            <div v-if="selectAllAcrossPages" class="mt-2 p-2 bg-yellow-50 rounded text-yellow-800 text-sm">⚠️ Warning: This will delete ALL {{ totalFiltered }} records matching your current filters.</div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel :disabled="bulkDeleting">Cancel</AlertDialogCancel>
           <AlertDialogAction @click="bulkDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90" :disabled="bulkDeleting">
-            <Loader2 v-if="bulkDeleting" class="h-4 w-4 mr-2 animate-spin" />
-            {{ bulkDeleting ? 'Deleting...' : 'Confirm Delete' }}
+            <Loader2 v-if="bulkDeleting" class="h-4 w-4 mr-2 animate-spin" /> {{ bulkDeleting ? 'Deleting...' : 'Delete All' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

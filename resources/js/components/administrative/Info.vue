@@ -29,14 +29,14 @@ const props = defineProps<{
 // Download template
 const downloadTemplate = async () => {
     try {
-        const response = await axios.get('/api/v1/jurisprudence/import/template', {
+        const response = await axios.get('/api/v1/administrative/import/template', {
             responseType: 'blob'
         });
         
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'jurisprudence_template.xlsx');
+        link.setAttribute('download', 'administrative_order_template.xlsx');
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -51,7 +51,7 @@ const downloadTemplate = async () => {
 const defaultItems: InfoItem[] = [
   {
     title: 'Template Format',
-    description: 'Use our Excel template with the correct column headers. Required fields: GR Number and Date.',
+    description: 'Use our Excel template with the correct column headers. Required fields: AO Number and Date.',
     icon: FileSpreadsheet
   },
   {
@@ -91,7 +91,7 @@ const buttonVariantValue = props.buttonVariant || 'outline';
           {{ description }}
         </p>
         <p v-else class="text-sm text-muted-foreground mt-1">
-          Everything you need to know about importing jurisprudence records
+          Everything you need to know about importing administrative order records.
         </p>
       </div>
       <div class="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
@@ -116,7 +116,7 @@ const buttonVariantValue = props.buttonVariant || 'outline';
           <div class="space-y-1 flex-1">
             <div class="font-medium text-sm">Download Template</div>
             <p class="text-sm text-muted-foreground">
-              Download the template for the exact format required 
+              Download the template for the exact format required
             </p>
             <Button 
               variant="link" 
