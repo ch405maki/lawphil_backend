@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\v1\ProfilePictureController;
 use App\Http\Controllers\Web\JurisprudenceController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return Inertia::render('auth/Login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
