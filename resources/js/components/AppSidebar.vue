@@ -20,9 +20,8 @@ const mainNavItems: NavItem[] = [
         icon: FileText,
         children: [
             { title: 'Presidential Decrees', href: route('dashboard') }, 
-            // Ito ang binago natin:
             { title: 'Executive Orders', href: route('executive-orders.index') },
-            { title: 'Administrative Orders', href: route('dashboard') },
+            { title: 'Administrative Orders', href: route('administrative.index') },
             { title: 'Memorandum Orders', href: route('dashboard') },
             { title: 'Memorandum Circulars', href: route('memorandum-circulars.index') },
             { title: 'Proclamations', href: route('dashboard') },
