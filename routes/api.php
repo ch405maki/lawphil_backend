@@ -14,7 +14,6 @@ use App\Http\Controllers\Api\v1\AdministrativeOrderController;
 use App\Http\Controllers\Api\v1\AdministrativeOrderImportController;
 use App\Http\Controllers\Api\v1\MemorandumOrderController;
 use App\Http\Controllers\Api\v1\GeneralOrderController;
-// BAGO: Import Controllers
 use App\Http\Controllers\Api\v1\MemorandumOrderImportController;
 use App\Http\Controllers\Api\v1\GeneralOrderImportController;
 
@@ -31,6 +30,24 @@ Route::prefix('jurisprudence')->group(function () {
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
+});
+
+// Memorandum Orders Management
+Route::prefix('memorandum-orders')->group(function () {
+    Route::get('/', [MemorandumOrderController::class, 'index'])->name('memorandum-orders.index');
+    Route::post('/', [MemorandumOrderController::class, 'store'])->name('memorandum-orders.store');
+    Route::post('/bulk-delete', [MemorandumOrderController::class, 'bulkDelete'])->name('memorandum-orders.bulk-delete');
+    Route::post('/{id}', [MemorandumOrderController::class, 'update'])->name('memorandum-orders.update');
+    Route::delete('/{id}', [MemorandumOrderController::class, 'destroy'])->name('memorandum-orders.destroy');
+});
+
+// General Orders Management
+Route::prefix('general-orders')->group(function () {
+    Route::get('/', [GeneralOrderController::class, 'index'])->name('general-orders.index');
+    Route::post('/', [GeneralOrderController::class, 'store'])->name('general-orders.store');
+    Route::post('/bulk-delete', [GeneralOrderController::class, 'bulkDelete'])->name('general-orders.bulk-delete');
+    Route::post('/{id}', [GeneralOrderController::class, 'update'])->name('general-orders.update');
+    Route::delete('/{id}', [GeneralOrderController::class, 'destroy'])->name('general-orders.destroy');
 });
 
 // Memorandum Orders Management
