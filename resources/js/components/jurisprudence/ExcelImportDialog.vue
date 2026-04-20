@@ -26,11 +26,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-// Props
+// UPDATED PROPS: Dinagdag ang importUrl at title para dynamic
 const props = defineProps<{
   triggerText?: string;
   triggerVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   triggerIcon?: any;
+  importUrl: string; // Kailangan para alam kung saang API magsesend (e.g., /api/v1/jurisprudence/import)
+  title?: string;    // Pangalan ng page (e.g., "Memorandum Orders")
 }>();
 
 // Emits
@@ -119,7 +121,8 @@ const uploadFile = async () => {
   formData.append('file', file.value);
   
   try {
-    const response = await axios.post('/api/v1/jurisprudence/import', formData, {
+    // DYNAMIC URL: Gagamitin na natin ang props.importUrl imbes na naka-hardcode
+    const response = await axios.post(props.importUrl, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Accept': 'application/json',
@@ -227,21 +230,18 @@ const closeDialog = () => {
     
     <DialogContent class="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Import Jurisprudence from Excel</DialogTitle>
+        <DialogTitle>Import {{ title || 'Jurisprudence' }} from Excel</DialogTitle>
         <DialogDescription>
-          Upload an Excel file to import jurisprudence records.
+          Upload an Excel file to import {{ title?.toLowerCase() || 'jurisprudence records' }}.
         </DialogDescription>
       </DialogHeader>
       
       <div class="space-y-6 py-4">
-        <!-- Conditional Content: Show Upload Area or Results -->
         <div v-if="!uploadResult">
-          <!-- File Upload Area with Dropzone -->
           <div class="space-y-4">
             <div class="grid w-full items-center gap-1.5">
               <Label>Upload Excel File</Label>
               
-              <!-- Custom File Upload Dropzone -->
               <div 
                 class="relative border-2 border-dashed rounded-lg p-8 transition-all duration-200 cursor-pointer"
                 :class="[
@@ -264,7 +264,6 @@ const closeDialog = () => {
                 />
                 
                 <div class="flex flex-col items-center justify-center text-center space-y-3">
-                  <!-- Icon with animation -->
                   <div 
                     class="p-2 rounded-lg bg-primary/10 transition-all duration-300"
                     :class="isDragOver ? 'bg-primary/20 scale-110' : ''"
@@ -274,7 +273,6 @@ const closeDialog = () => {
                     />
                   </div>
                   
-                  <!-- Text content -->
                   <div class="space-y-1">
                     <p class="text-sm font-medium">
                       {{ file ? file.name : 'Drag and drop your Excel file here' }}
@@ -293,7 +291,6 @@ const closeDialog = () => {
               </div>
             </div>
             
-            <!-- Upload Button and Clear -->
             <div class="flex justify-end gap-2">
               <Button 
                 @click="uploadFile" 
@@ -317,7 +314,6 @@ const closeDialog = () => {
               </Button>
             </div>
             
-            <!-- Progress Bar -->
             <div v-if="isUploading && uploadProgress > 0" class="w-full">
               <div class="bg-secondary h-2 rounded-full overflow-hidden">
                 <div 
@@ -330,9 +326,7 @@ const closeDialog = () => {
           </div>
         </div>
         
-        <!-- Results Display (Replaces Upload Area) -->
         <div v-else>
-          <!-- Success Alert -->
           <div v-if="uploadResult.success">
             <Alert variant="default" class="border-green-500 bg-green-50">
               <AlertTitle class="text-green-800 font-semibold">Import Successful!</AlertTitle>
@@ -356,7 +350,6 @@ const closeDialog = () => {
                   </div>
                 </div>
                 
-                <!-- Show errors if any -->
                 <div v-if="uploadResult.errors && uploadResult.errors.length > 0" class="mt-4">
                   <details class="cursor-pointer">
                     <summary class="text-sm font-medium text-green-800 hover:text-green-900">
@@ -375,7 +368,6 @@ const closeDialog = () => {
             </Alert>
           </div>
           
-          <!-- Error Alert -->
           <div v-else>
             <Alert variant="destructive">
               <AlertTitle>Import Failed</AlertTitle>
@@ -397,10 +389,8 @@ const closeDialog = () => {
                   <p class="text-sm font-medium">Troubleshooting tips:</p>
                   <ul class="list-disc list-inside text-sm mt-1 space-y-1">
                     <li>Make sure your Excel file follows the template format</li>
-                    <li>Check that GR Number and Date are filled</li>
                     <li>Verify date format is YYYY-MM-DD</li>
                     <li>Ensure file size is less than 10MB</li>
-                    <li>Download the template again if needed</li>
                   </ul>
                 </div>
               </AlertDescription>
@@ -408,7 +398,6 @@ const closeDialog = () => {
           </div>
         </div>
         
-        <!-- Action Buttons for Results (Always at bottom of results) -->
         <div v-if="uploadResult" class="flex gap-2 justify-end">
           <Button @click="clearResults" variant="outline" class="gap-2">
             <Upload class="h-4 w-4" />

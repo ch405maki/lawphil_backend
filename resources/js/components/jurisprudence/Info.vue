@@ -116,7 +116,7 @@ const buttonVariantValue = props.buttonVariant || 'outline';
           <div class="space-y-1 flex-1">
             <div class="font-medium text-sm">Download Template</div>
             <p class="text-sm text-muted-foreground">
-              Download the template for the exact format required
+              Download the template for the exact format required 
             </p>
             <Button 
               variant="link" 
