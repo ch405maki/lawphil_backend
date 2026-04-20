@@ -4,8 +4,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
+
+// Jurisprudence Controllers
 use App\Http\Controllers\Api\v1\JurisprudenceController;
 use App\Http\Controllers\Api\v1\JurisprudenceImportController;
+
+// Administrative Order Controllers
+use App\Http\Controllers\Api\v1\AdministrativeOrderController;
+use App\Http\Controllers\Api\v1\AdministrativeOrderImportController;
 use App\Http\Controllers\Api\v1\MemorandumOrderController;
 use App\Http\Controllers\Api\v1\GeneralOrderController;
 // BAGO: Import Controllers
@@ -16,7 +22,9 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Jurisprudence Management
+/**
+ * Jurisprudence Management (Existing)
+ */
 Route::prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
@@ -43,8 +51,28 @@ Route::prefix('general-orders')->group(function () {
     Route::delete('/{id}', [GeneralOrderController::class, 'destroy'])->name('general-orders.destroy');
 });
 
+/**
+ * API v1 - Administrative Orders
+ */
+Route::prefix('v1/administrative')->group(function () {
+    // 1. Static/Specific routes FIRST
+    Route::get('/', [AdministrativeOrderController::class, 'index'])->name('administrative.index');
+    Route::post('/', [AdministrativeOrderController::class, 'store'])->name('administrative.store');
+    
+    // Move these above {id}
+    Route::post('/bulk-delete', [AdministrativeOrderController::class, 'bulkDelete'])->name('administrative.bulk-delete');
+    Route::post('/import', [AdministrativeOrderImportController::class, 'import']);
+    Route::get('/import/template', [AdministrativeOrderImportController::class, 'downloadTemplate']);
+
+    // 2. Dynamic/Wildcard routes LAST
+    Route::post('/{id}', [AdministrativeOrderController::class, 'update'])->name('administrative.update');
+    Route::delete('/{id}', [AdministrativeOrderController::class, 'destroy'])->name('administrative.destroy');
+});
+
+/**
+ * API v1 - Imports & Templates
+ */
 Route::prefix('v1')->group(function () {
-    // Jurisprudence Import
     Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import']);
     Route::get('/jurisprudence/import/template', [JurisprudenceImportController::class, 'downloadTemplate']);
     
@@ -55,7 +83,9 @@ Route::prefix('v1')->group(function () {
     Route::post('/general-orders/import', [GeneralOrderImportController::class, 'import']);
 });
 
-// User Management
+/**
+ * User & Profile Management
+ */
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::post('/users', [UserController::class, 'store']);
 Route::post('/upload-users', [UserController::class, 'uploadUsers']);
