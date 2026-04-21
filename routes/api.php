@@ -90,6 +90,7 @@ Route::prefix('v1/administrative')->group(function () {
  * API v1 - Imports & Templates
  */
 Route::prefix('v1')->group(function () {
+    // Jurisprudence Imports
     Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import']);
     Route::get('/jurisprudence/import/template', [JurisprudenceImportController::class, 'downloadTemplate']);
     
