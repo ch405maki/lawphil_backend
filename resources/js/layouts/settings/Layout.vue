@@ -18,6 +18,10 @@ const sidebarNavItems: NavItem[] = [
         title: 'Appearance',
         href: '/settings/appearance',
     },
+    {
+        title: 'Profile Pictures',
+        href: '/profile-pictures',
+    },
 ];
 
 const page = usePage();
