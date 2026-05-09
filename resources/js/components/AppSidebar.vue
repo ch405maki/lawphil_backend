@@ -33,9 +33,6 @@ const reportItems = ref([
     },
 ]);
 
-const footerNavItems: NavItem[] = [
-    { title: 'Configuration', href: route('profile-pictures.index'), icon: LayoutGrid },
-];
 </script>
 
 <template>
@@ -64,7 +61,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" v-if="user.role === 'admin'"/>
             <NavUser />
         </SidebarFooter>
     </Sidebar>
