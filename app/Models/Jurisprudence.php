@@ -36,6 +36,11 @@ class Jurisprudence extends Model
             ->logOnly([
                 'gr_number',
                 'date',
+                'citation',
+                'ponente',
+                'reference',
+                'url',
+                'subject',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
