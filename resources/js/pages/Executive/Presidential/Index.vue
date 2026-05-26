@@ -5,8 +5,8 @@ import { Head } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 
 // Custom Components
-import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
-import JurisprudenceTable from '@/components/jurisprudence/JurisprudenceTable.vue';
+import ExcelImportDialog from '@/components/Executive/presidential/ExcelImportDialog.vue';
+import PresidentialTable from '@/components/Executive/presidential/PresidentialTable.vue';
 
 // Icons
 import { FileSpreadsheet, Plus } from 'lucide-vue-next';
@@ -14,8 +14,12 @@ import { Button } from '@/components/ui/button';
 
 const breadcrumbs = [ 
   { title: "Dashboard", href: "/dashboard" }, 
-  { title: "Jurisprudence", href: "#" }
+  { title: "Presidential Decrees", href: "#" }
 ];
+
+const props = defineProps({
+    presidential: Object,
+});
 
 // Refresh trigger
 const refreshTrigger = ref(0);
@@ -37,19 +41,19 @@ const refreshTable = () => {
 };
 
 const goToCreate = () => {
-    window.location.href = '/jurisprudence/create';
+    window.location.href = '/presidential/create';
 };
 </script>
 
 <template>
-    <Head title="Jurisprudence" />
+    <Head title="Presidential Decrees" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="min-h-screen bg-background p-4">
             <!-- Header -->
             <div class="mb-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Jurisprudence Bank</h1>
+                        <h1 class="text-2xl font-bold tracking-tight">Presidential Decrees</h1>
                         <p class="text-muted-foreground">Legal Archives Management System</p>
                     </div>
                     <div class="flex gap-2">
@@ -68,8 +72,8 @@ const goToCreate = () => {
                 </div>
             </div>
 
-            <!-- Jurisprudence Table Component -->
-            <JurisprudenceTable :refresh-trigger="refreshTrigger" @refresh="refreshTable" />
+            <!-- Presidential Decrees Table Component -->
+            <PresidentialTable :refresh-trigger="refreshTrigger" @refresh="refreshTable" />
         </div>
     </AppLayout>
 </template>

@@ -5,8 +5,8 @@ import { Head } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 
 // Custom Components
-import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
-import JurisprudenceTable from '@/components/jurisprudence/JurisprudenceTable.vue';
+import ExcelImportDialog from '@/components/Executive/ao/ExcelImportDialog.vue';
+import AOTable from '@/components/Executive/ao/AOTable.vue';
 
 // Icons
 import { FileSpreadsheet, Plus } from 'lucide-vue-next';
@@ -14,8 +14,12 @@ import { Button } from '@/components/ui/button';
 
 const breadcrumbs = [ 
   { title: "Dashboard", href: "/dashboard" }, 
-  { title: "Jurisprudence", href: "#" }
+  { title: "Administrative Orders", href: "/ao" }
 ];
+
+const props = defineProps({
+    ao: Object,
+});
 
 // Refresh trigger
 const refreshTrigger = ref(0);
@@ -37,19 +41,19 @@ const refreshTable = () => {
 };
 
 const goToCreate = () => {
-    window.location.href = '/jurisprudence/create';
+    window.location.href = '/ao/create';
 };
 </script>
 
 <template>
-    <Head title="Jurisprudence" />
+    <Head title="Administrative Orders" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="min-h-screen bg-background p-4">
             <!-- Header -->
             <div class="mb-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Jurisprudence Bank</h1>
+                        <h1 class="text-2xl font-bold tracking-tight">Administrative Orders</h1>
                         <p class="text-muted-foreground">Legal Archives Management System</p>
                     </div>
                     <div class="flex gap-2">
@@ -68,8 +72,8 @@ const goToCreate = () => {
                 </div>
             </div>
 
-            <!-- Jurisprudence Table Component -->
-            <JurisprudenceTable :refresh-trigger="refreshTrigger" @refresh="refreshTable" />
+            <!-- Administrative Order Table Component -->
+            <AOTable :refresh-trigger="refreshTrigger" @refresh="refreshTable" />
         </div>
     </AppLayout>
 </template>
