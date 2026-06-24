@@ -424,7 +424,7 @@ defineExpose({
               <Input 
                 v-model="search" 
                 @input="handleSearch"
-                placeholder="Search G.R. No. or Case Title..." 
+                placeholder="Search Case No. or Case Title..." 
                 class="pl-9"
               />
             </div>
@@ -485,7 +485,7 @@ defineExpose({
                   <span class="text-xs font-normal">All</span>
                 </div>
               </TableHead>
-              <TableHead class="w-[15%]">G.R. & Date</TableHead>
+              <TableHead class="w-[15%]">Case No. & Date</TableHead>
               <TableHead class="w-[40%]">Case Title</TableHead>
               <TableHead class="w-[15%] text-center">URL</TableHead>
               <TableHead class="w-[10%] text-center">PDF</TableHead>
