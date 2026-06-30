@@ -43,15 +43,12 @@ const reportItems = ref([
         href: '#',
         icon: BarChart3,
         children: [
-            { title: 'Case Stats', href: route('dashboard') },
-            { title: 'User Logs', href: route('dashboard') },
+            { title: 'Case Stats', href: '#' },
+            { title: 'Activity Logs', href: '/logs' },
         ],
     },
 ]);
 
-const footerNavItems: NavItem[] = [
-    { title: 'Configuration', href: route('profile-pictures.index'), icon: LayoutGrid },
-];
 </script>
 
 <template>
@@ -79,7 +76,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" v-if="user.role === 'admin'"/>
             <NavUser />
         </SidebarFooter>
     </Sidebar>

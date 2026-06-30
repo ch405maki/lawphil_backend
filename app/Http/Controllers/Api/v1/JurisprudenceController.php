@@ -11,34 +11,35 @@ use Illuminate\Support\Facades\Storage;
 
 class JurisprudenceController extends Controller 
 {
-    public function index(Request $request) 
+    private const SORTABLE = [
+        'az'     => ['gr_number', 'asc'],
+        'za'     => ['gr_number', 'desc'],
+        'oldest' => ['date',      'asc'],
+        'newest' => ['date',      'desc'],
+    ];
+
+    private const SEARCHABLE_COLUMNS = [
+        'citation',
+        'gr_number',
+        'ponente',
+        'reference',
+        'subject',
+    ];
+
+    public function index(Request $request)
     {
         try {
             $query = Jurisprudence::query();
 
-            if ($request->filled('search')) {
-                $s = $request->search;
-                $query->where(function($q) use ($s) {
-                    $q->where('citation', 'LIKE', "%$s%")
-                    ->orWhere('gr_number', 'LIKE', "%$s%");
-                });
-            }
+            $this->applySearch($query, $request->input('search'));
+            $this->applyYearFilter($query, $request->input('year'));
+            $this->applySort($query, $request->input('sort'));
 
-            if ($request->filled('year')) {
-                $query->whereYear('date', $request->year);
-            }
+            $rows = min((int) $request->input('rows', 10), 100);
 
-            if ($request->sort === 'az') {
-                $query->orderBy('citation', 'asc');
-            } elseif ($request->sort === 'za') {
-                $query->orderBy('citation', 'desc');
-            } elseif ($request->sort === 'oldest') {
-                $query->orderBy('date', 'asc');
-            } else {
-                $query->orderBy('date', 'desc');
-            }
-
-            return response()->json($query->paginate($request->get('rows', 10)));
+            return response()->json(
+                $query->paginate($rows)->withQueryString()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -235,5 +236,60 @@ class JurisprudenceController extends Controller
                 'message' => 'Failed to delete records: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Keyword-based search: splits the input into individual tokens and requires
+     * every token to match at least one searchable column.
+     * 
+     * e.g. "republic philippines" → two AND-wrapped OR groups, so a row must
+     * contain BOTH "republic" and "philippines" somewhere across the columns.
+     */
+    private function applySearch($query, ?string $search): void
+    {
+        if (blank($search)) {
+            return;
+        }
+
+        // Normalize whitespace and split into unique, non-empty tokens
+        $keywords = collect(preg_split('/\s+/', trim($search)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($keywords as $keyword) {
+            $query->where(function ($q) use ($keyword) {
+                foreach (self::SEARCHABLE_COLUMNS as $column) {
+                    $q->orWhere($column, 'LIKE', "%{$keyword}%");
+                }
+            });
+        }
+    }
+
+    /**
+     * Filter by year using the `date` column.
+     */
+    private function applyYearFilter($query, mixed $year): void
+    {
+        if (blank($year) || ! ctype_digit((string) $year)) {
+            return;
+        }
+
+        $query->whereYear('date', (int) $year);
+    }
+
+    /**
+     * Apply sorting from the allow-list; default to newest.
+     */
+    private function applySort($query, ?string $sort): void
+    {
+        [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
+
+        $query->orderBy($column, $direction);
     }
 }

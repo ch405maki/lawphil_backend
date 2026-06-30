@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { ArrowUpRightIcon, TriangleAlert, Upload, Download } from 'lucide-vue-next';
+import { Upload, Download } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
 import CreateJurisprudenceForm from '@/components/jurisprudence/CreateJurisprudenceForm.vue';

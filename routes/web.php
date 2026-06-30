@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Users\UserController;
 use App\Http\Controllers\Api\v1\ProfilePictureController;
+use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\JurisprudenceController;
 use App\Http\Controllers\Web\PresidentialController;
 use App\Http\Controllers\Web\ProclamationController;
@@ -16,14 +17,16 @@ use App\Http\Controllers\Web\GenorController;
 
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return Inertia::render('auth/Login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     
-    Route::get('dashboard', function () {   
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('/logs', function () {   
+        return Inertia::render('Log/Index');
+    })->name('logs');
 
     // jurisprudence
     Route::prefix('jurisprudence')->group(function () {

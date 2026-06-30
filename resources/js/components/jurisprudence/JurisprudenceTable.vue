@@ -111,8 +111,17 @@ const currentCase = ref({
     pdf_path: ''
 });
 
-// Helper function to generate PDF URL from HTML URL
-const generatePdfUrl = (url: string) => {
+// Helper function to generate PDF URL - checks pdf_path first, then falls back to url
+const getPdfUrl = (pdfPath: string | null, url: string | null) => {
+  // PRIORITY 1: If pdf_path is available, use it directly
+  if (pdfPath && pdfPath.trim() !== '') {
+    if (pdfPath.startsWith('http')) {
+      return pdfPath;
+    }
+    return `https://lawphil.net/judjuris/${pdfPath}`;
+  }
+  
+  // PRIORITY 2: Fall back to generating from html url
   if (!url) return null;
   
   if (url.startsWith('http')) {
@@ -343,7 +352,7 @@ const bulkDelete = async () => {
   }
 };
 
-const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
 
 const refreshData = () => {
     selectAllAcrossPages.value = false;
@@ -551,8 +560,8 @@ defineExpose({
               </TableCell>
               <TableCell class="text-center">
                 <a 
-                  v-if="item.pdf_availability && item.url" 
-                  :href="generatePdfUrl(item.url)" 
+                  v-if="item.pdf_availability && (item.pdf_path || item.url)" 
+                  :href="getPdfUrl(item.pdf_path, item.url)" 
                   target="_blank" 
                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
                 >

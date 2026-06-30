@@ -23,14 +23,16 @@ use App\Http\Controllers\Api\v1\MCImportController;
 use App\Http\Controllers\Api\v1\GenorController;
 use App\Http\Controllers\Api\v1\GenorImportController;
 use App\Models\Presidential;
+use App\Http\Controllers\Api\v1\ActivityLogController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
 // Jurisprudence Management
-Route::prefix('jurisprudence')->group(function () {
-    Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+
+Route::middleware('web', 'auth')->prefix('jurisprudence')->group(function () {
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
@@ -165,6 +167,9 @@ Route::post('/users', [UserController::class, 'store']);
 Route::post('/upload-users', [UserController::class, 'uploadUsers']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+
+// Activity log
+Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 
 Route::prefix('profile-pictures')->group(function () {
     Route::post('/', [ProfilePictureController::class, 'store'])->name('profile-pictures.store');

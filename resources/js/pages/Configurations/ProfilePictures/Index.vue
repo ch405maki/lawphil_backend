@@ -7,12 +7,12 @@ import { Camera, Upload, Loader2, Trash2 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from "vue-toastification";
+import SettingsLayout from '@/layouts/settings/Layout.vue';
 
 const toast = useToast();
 
 const breadcrumbs = [
-  { title: "Dashboard", href: "/dashboard" },
-  { title: "Users Management", href: "/users" }
+  { title: "Profile Pictures", href: "#" },
 ];
 
 defineProps({
@@ -67,6 +67,7 @@ const handleUpload = () => {
 <template>
   <Head title="Users Management" />
   <AppLayout :breadcrumbs="breadcrumbs">
+    <SettingsLayout>
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <div class="flex justify-between items-center">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">Profile Pictures</h1>
@@ -179,5 +180,6 @@ const handleUpload = () => {
         </CardContent>
       </Card>
     </div>
+    </SettingsLayout>
   </AppLayout>
 </template>
