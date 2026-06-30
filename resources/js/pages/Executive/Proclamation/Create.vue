@@ -2,11 +2,11 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { Upload, Download } from 'lucide-vue-next';
+import { ArrowUpRightIcon, TriangleAlert, Upload, Download } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
-import ExcelImportDialog from '@/components/jurisprudence/ExcelImportDialog.vue';
-import CreateJurisprudenceForm from '@/components/jurisprudence/CreateJurisprudenceForm.vue';
-import Info from '@/components/jurisprudence/Info.vue';
+import ExcelImportDialog from '@/components/Executive/proclamation/ExcelImportDialog.vue';
+import CreateProclamationForm from '@/components/Executive/proclamation/CreateProclamationForm.vue';
+import Info from '@/components/Executive/proclamation/Info.vue';
 import {
   Tooltip,
   TooltipContent,
@@ -21,12 +21,12 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
     {
-        title: 'Jurisprudence',
-        href: '/jurisprudence',
+        title: 'Proclamations',
+        href: '/proclamation',
     },
     {
         title: 'Create',
-        href: '/Jurisprudence/Create',
+        href: '/Proclamation/Create',
     },
 ];
 
@@ -43,14 +43,14 @@ const handleImportError = (error: any) => {
 // Download template
 const downloadTemplate = async () => {
     try {
-        const response = await axios.get('/api/v1/jurisprudence/import/template', {
+        const response = await axios.get('/api/v1/proclamations/import/template', {
             responseType: 'blob'
         });
         
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'jurisprudence_template.xlsx');
+        link.setAttribute('download', 'proclamation_template.xlsx');
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -72,9 +72,9 @@ const downloadTemplate = async () => {
             <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight">Create Jurisprudence Record</h1>
+                        <h1 class="text-2xl font-bold tracking-tight">Register New Proclamation</h1>
                         <p class="text-muted-foreground">
-                            Create a new jurisprudence record manually.
+                            Register a new proclamation record manually.
                         </p>
                     </div>
                     
@@ -112,7 +112,7 @@ const downloadTemplate = async () => {
             
             <!-- Manual Creation Form -->
             <div>
-                <CreateJurisprudenceForm />
+                <CreateProclamationForm />
             </div>
         </div>
     </AppLayout>

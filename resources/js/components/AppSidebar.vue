@@ -6,7 +6,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, UserRoundCog, BarChart3, Gavel, FileUp } from 'lucide-vue-next';
+import { LayoutGrid, UserRoundCog, Gavel, FileUp, FileText, BarChart3 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage().props.auth.user;
@@ -14,6 +14,22 @@ const user = usePage().props.auth.user;
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
     { title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel },
+    { title: 'Republic Acts', href: route('republic.index'), icon: Gavel },
+    {
+        title: 'Executive Issuances',
+        href: '#',
+        icon: FileText,
+        children: [
+            { title: 'Presidential Decrees', href: route('presidential.index') }, 
+            { title: 'Executive Orders', href: route('execord.index') },
+            { title: 'Administrative Orders', href: route('ao.index') },
+            { title: 'Memorandum Orders', href: route('mo.index') },
+            { title: 'Memorandum Circulars', href: route('mc.index') },
+            { title: 'Proclamations', href: route('proclamation.index') },
+            { title: 'General Orders', href: route('genor.index') },
+            { title: 'Special Orders', href: route('dashboard') },
+        ],
+    },
     { title: 'User Management', href: route('users.index'), icon: UserRoundCog },
 ];
 
@@ -52,7 +68,6 @@ const reportItems = ref([
         <SidebarContent>
             <NavMain :items="mainNavItems" group-label="Navigation"/>
 
-            <!-- admin -->
             <div v-if="user.role === 'admin'">
                 <NavMain :items="adminNavItems" group-label="Data Management"/>
             </div>
