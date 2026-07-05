@@ -143,7 +143,7 @@ const resetForm = () => {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label for="gr_number">
-            GR Number <span class="text-red-500">*</span>
+            GR <span class="text-red-500">*</span>
           </Label>
           <Input
             id="gr_number"

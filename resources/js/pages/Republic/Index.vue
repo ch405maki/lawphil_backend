@@ -11,6 +11,9 @@ import RepublicTable from '@/components/republic/RepublicTable.vue';
 // Icons
 import { FileSpreadsheet, Plus } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 const breadcrumbs = [ 
   { title: "Dashboard", href: "/dashboard" }, 
@@ -57,14 +60,14 @@ const goToCreate = () => {
                         <p class="text-muted-foreground">Legal Archives Management System</p>
                     </div>
                     <div class="flex gap-2">
-                        <ExcelImportDialog 
+                        <ExcelImportDialog v-if="can('republic', 'create')"
                             trigger-text="Import Excel/CSV"
                             trigger-variant="outline"
                             :trigger-icon="FileSpreadsheet"
                             @import-success="handleImportSuccess"
                             @import-error="handleImportError"
                         />
-                        <Button @click="goToCreate" class="gap-2">
+                        <Button v-if="can('republic', 'create')" @click="goToCreate" class="gap-2">
                             <Plus class="h-4 w-4" />
                             Add New 
                         </Button>

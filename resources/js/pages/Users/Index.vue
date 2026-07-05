@@ -7,6 +7,8 @@
   import { Button } from "@/components/ui/button";
   import { Input } from '@/components/ui/input'
   import { Upload, Search } from "lucide-vue-next";
+  import { usePermissions } from '@/composables/usePermissions';
+  const { can } = usePermissions();
   import axios from "axios";
   import type { AxiosError } from "axios";
   import { useToast } from "vue-toastification";
@@ -118,6 +120,7 @@
           <div class="flex items-center gap-4">
             <!-- Upload Excel Button -->
             <input
+              v-if="can('users', 'create')"
               type="file"
               ref="fileInput"
               accept=".xlsx, .xls"
@@ -125,6 +128,7 @@
               @change="handleFileUpload"
             />
             <Button
+              v-if="can('users', 'create')"
               @click="triggerFileInput"
               :disabled="loading"
               variant="outline"
@@ -135,7 +139,7 @@
             </Button>
             
             <!-- Create User Button -->
-            <CreateUserDialog :profile-pictures="props.profilePictures" />
+            <CreateUserDialog v-if="can('users', 'create')" :profile-pictures="props.profilePictures" />
           </div>
         </div>
   

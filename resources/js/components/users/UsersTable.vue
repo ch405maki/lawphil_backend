@@ -44,8 +44,8 @@
 
         <!-- Actions -->
         <TableCell class="text-right space-x-2">
-          <EditUserDialog :user="user" />
-          <DeleteUserDialog :user="user" />
+          <EditUserDialog v-if="can('users', 'update')" :user="user" />
+          <DeleteUserDialog v-if="can('users', 'delete')" :user="user" />
         </TableCell>
       </TableRow>
     </TableBody>
@@ -62,6 +62,9 @@ import CustomSwitch from '@/components/ui/customswitch/CustomSwitch.vue';
 import { Switch } from '@/components/ui/switch'
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 // Define the User type
 interface User {

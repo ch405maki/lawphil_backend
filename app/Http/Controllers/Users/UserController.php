@@ -30,7 +30,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,user',
+            'role' => 'required|string|max:255',
             'status' => 'required|in:active,inactive',
             'profile_picture_id' => 'nullable|integer|exists:profile_pictures,id',
         ]);
@@ -103,7 +103,7 @@ class UserController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
-                'role' => 'required|in:admin,user',
+                'role' => 'required|string|max:255',
                 'status' => 'required|in:active,inactive',
             ]);
 

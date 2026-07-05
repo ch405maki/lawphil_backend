@@ -54,4 +54,51 @@ class User extends Authenticatable
     {
         return $this->belongsTo(ProfilePicture::class, 'profile_picture_id');
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function rolePermissions()
+    {
+        return $this->hasMany(RolePermission::class, 'role', 'role');
+    }
+
+    public function canModule(string $module, string $action): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $permission = RolePermission::where('role', $this->role)
+            ->where('module', $module)
+            ->first();
+
+        if (!$permission) {
+            return false;
+        }
+
+        return match ($action) {
+            'view' => $permission->can_view,
+            'create' => $permission->can_create,
+            'update' => $permission->can_update,
+            'delete' => $permission->can_delete,
+            default => false,
+        };
+    }
+
+    public function getPermissions(): array
+    {
+        $permissions = RolePermission::where('role', $this->role)->get();
+
+        return $permissions->mapWithKeys(function ($perm) {
+            return [$perm->module => [
+                'view' => $perm->can_view,
+                'create' => $perm->can_create,
+                'update' => $perm->can_update,
+                'delete' => $perm->can_delete,
+            ]];
+        })->toArray();
+    }
 }

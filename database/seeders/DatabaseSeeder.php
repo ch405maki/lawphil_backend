@@ -23,5 +23,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'password' => Hash::make('password'),
         ]);
+
+        $this->call(RolePermissionSeeder::class);
     }
 }

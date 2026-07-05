@@ -2,6 +2,9 @@
 import { ref, reactive, watch, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { toast } from 'vue-sonner';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
@@ -394,7 +397,7 @@ defineExpose({
           <div class="flex items-center gap-2">
             <!-- Bulk Delete Button -->
             <Button 
-              v-if="selectedIds.length > 0 || selectAllAcrossPages"
+              v-if="can('jurisprudence', 'delete') && (selectedIds.length > 0 || selectAllAcrossPages)"
               variant="destructive" 
               size="sm"
               @click="showBulkDeleteDialog = true"
@@ -571,10 +574,10 @@ defineExpose({
               </TableCell>
               <TableCell class="text-right">
                 <div class="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading">
+                  <Button v-if="can('jurisprudence', 'update')" variant="ghost" size="icon" @click="openEdit(item)" :disabled="loading">
                     <SquarePen class="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" @click="confirmDelete(item.id)" :disabled="loading">
+                  <Button v-if="can('jurisprudence', 'delete')" variant="ghost" size="icon" @click="confirmDelete(item.id)" :disabled="loading">
                     <Trash2 class="h-4 w-4 text-destructive" />
                   </Button>
                 </div>

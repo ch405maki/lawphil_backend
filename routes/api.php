@@ -24,153 +24,158 @@ use App\Http\Controllers\Api\v1\GenorController;
 use App\Http\Controllers\Api\v1\GenorImportController;
 use App\Models\Presidential;
 use App\Http\Controllers\Api\v1\ActivityLogController;
+use App\Http\Controllers\Api\v1\PermissionController;
+
+/*
+|--------------------------------------------------------------------------
+| Public API (no authentication required)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('public')->group(function () {
+    Route::get('/jurisprudence', [JurisprudenceController::class, 'index']);
+    Route::get('/presidential', [PresidentialController::class, 'index']);
+    Route::get('/proclamations', [ProclamationController::class, 'index']);
+    Route::get('/republic', [RepublicController::class, 'index']);
+    Route::get('/execord', [ExecordController::class, 'index']);
+    Route::get('/ao', [AOController::class, 'index']);
+    Route::get('/mo', [MOController::class, 'index']);
+    Route::get('/mc', [MCController::class, 'index']);
+    Route::get('/genor', [GenorController::class, 'index']);
+});
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
 // Jurisprudence Management
-Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
-
-Route::middleware('web', 'auth')->prefix('jurisprudence')->group(function () {
+Route::middleware('auth:sanctum')->prefix('jurisprudence')->group(function () {
+    Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
 });
 
-Route::prefix('v1')->group(function () {
-    Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import']);
+Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import'])->middleware('permission:jurisprudence,create');
     Route::get('/jurisprudence/import/template', [JurisprudenceImportController::class, 'downloadTemplate']);
 });
 
 // Presidential Management
-Route::prefix('v1/presidential')->group(function () {
-    Route::post('/import', [PresidentialImportController::class, 'import']);
+Route::prefix('v1/presidential')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [PresidentialImportController::class, 'import'])->middleware('permission:presidential,create');
     Route::get('/import/template', [PresidentialImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [PresidentialController::class, 'bulkDelete'])->name('presidential.bulk-delete');
+    Route::post('/bulk-delete', [PresidentialController::class, 'bulkDelete'])->name('presidential.bulk-delete')->middleware('permission:presidential,delete');
 
-    Route::get('/', [PresidentialController::class, 'index'])->name('presidential.index');
-    Route::post('/', [PresidentialController::class, 'store'])->name('presidential.store');
-    Route::post('/{id}', [PresidentialController::class, 'update'])->name('presidential.update');
-    Route::delete('/{id}', [PresidentialController::class, 'destroy'])->name('presidential.destroy');
+    Route::get('/', [PresidentialController::class, 'index'])->name('presidential.index')->middleware('permission:presidential,view');
+    Route::post('/', [PresidentialController::class, 'store'])->name('presidential.store')->middleware('permission:presidential,create');
+    Route::post('/{id}', [PresidentialController::class, 'update'])->name('presidential.update')->middleware('permission:presidential,update');
+    Route::delete('/{id}', [PresidentialController::class, 'destroy'])->name('presidential.destroy')->middleware('permission:presidential,delete');
 });
 
 // Proclamations Management
-Route::prefix('v1/proclamations')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [ProclamationImportController::class, 'import']);
+Route::prefix('v1/proclamations')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [ProclamationImportController::class, 'import'])->middleware('permission:proclamation,create');
     Route::get('/import/template', [ProclamationImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [ProclamationController::class, 'bulkDelete'])->name('proclamations.bulk-delete');
+    Route::post('/bulk-delete', [ProclamationController::class, 'bulkDelete'])->name('proclamations.bulk-delete')->middleware('permission:proclamation,delete');
 
-    Route::get('/', [ProclamationController::class, 'index'])->name('proclamations.index');
-    Route::post('/', [ProclamationController::class, 'store'])->name('proclamations.store');
-    Route::post('/{id}', [ProclamationController::class, 'update'])->name('proclamations.update');
-    Route::delete('/{id}', [ProclamationController::class, 'destroy'])->name('proclamations.destroy');
+    Route::get('/', [ProclamationController::class, 'index'])->name('proclamations.index')->middleware('permission:proclamation,view');
+    Route::post('/', [ProclamationController::class, 'store'])->name('proclamations.store')->middleware('permission:proclamation,create');
+    Route::post('/{id}', [ProclamationController::class, 'update'])->name('proclamations.update')->middleware('permission:proclamation,update');
+    Route::delete('/{id}', [ProclamationController::class, 'destroy'])->name('proclamations.destroy')->middleware('permission:proclamation,delete');
 });
 
 // Republic Acts Management
-Route::prefix('v1/republic')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [RepublicImportController::class, 'import']);
+Route::prefix('v1/republic')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [RepublicImportController::class, 'import'])->middleware('permission:republic,create');
     Route::get('/import/template', [RepublicImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [RepublicController::class, 'bulkDelete'])->name('republic.bulk-delete');
+    Route::post('/bulk-delete', [RepublicController::class, 'bulkDelete'])->name('republic.bulk-delete')->middleware('permission:republic,delete');
 
-    Route::get('/', [RepublicController::class, 'index'])->name('republic.index');
-    Route::post('/', [RepublicController::class, 'store'])->name('republic.store');
-    Route::post('/{id}', [RepublicController::class, 'update'])->name('republic.update');
-    Route::delete('/{id}', [RepublicController::class, 'destroy'])->name('republic.destroy');
+    Route::get('/', [RepublicController::class, 'index'])->name('republic.index')->middleware('permission:republic,view');
+    Route::post('/', [RepublicController::class, 'store'])->name('republic.store')->middleware('permission:republic,create');
+    Route::post('/{id}', [RepublicController::class, 'update'])->name('republic.update')->middleware('permission:republic,update');
+    Route::delete('/{id}', [RepublicController::class, 'destroy'])->name('republic.destroy')->middleware('permission:republic,delete');
 });
 
 // Executive Orders 
-Route::prefix('v1/execord')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [ExecordImportController::class, 'import']);
+Route::prefix('v1/execord')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [ExecordImportController::class, 'import'])->middleware('permission:execord,create');
     Route::get('/import/template', [ExecordImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [ExecordController::class, 'bulkDelete'])->name('execord.bulk-delete');
+    Route::post('/bulk-delete', [ExecordController::class, 'bulkDelete'])->name('execord.bulk-delete')->middleware('permission:execord,delete');
 
-    Route::get('/', [ExecordController::class, 'index'])->name('execord.index');
-    Route::post('/', [ExecordController::class, 'store'])->name('execord.store');
-    Route::post('/{id}', [ExecordController::class, 'update'])->name('execord.update');
-    Route::delete('/{id}', [ExecordController::class, 'destroy'])->name('execord.destroy');
+    Route::get('/', [ExecordController::class, 'index'])->name('execord.index')->middleware('permission:execord,view');
+    Route::post('/', [ExecordController::class, 'store'])->name('execord.store')->middleware('permission:execord,create');
+    Route::post('/{id}', [ExecordController::class, 'update'])->name('execord.update')->middleware('permission:execord,update');
+    Route::delete('/{id}', [ExecordController::class, 'destroy'])->name('execord.destroy')->middleware('permission:execord,delete');
 });
 
 // Administrative Orders
-Route::prefix('v1/ao')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [AOImportController::class, 'import']);
+Route::prefix('v1/ao')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [AOImportController::class, 'import'])->middleware('permission:ao,create');
     Route::get('/import/template', [AOImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [AOController::class, 'bulkDelete'])->name('ao.bulk-delete');
+    Route::post('/bulk-delete', [AOController::class, 'bulkDelete'])->name('ao.bulk-delete')->middleware('permission:ao,delete');
 
-    Route::get('/', [AOController::class, 'index'])->name('ao.index');
-    Route::post('/', [AOController::class, 'store'])->name('ao.store');
-    Route::post('/{id}', [AOController::class, 'update'])->name('ao.update');
-    Route::delete('/{id}', [AOController::class, 'destroy'])->name('ao.destroy');
+    Route::get('/', [AOController::class, 'index'])->name('ao.index')->middleware('permission:ao,view');
+    Route::post('/', [AOController::class, 'store'])->name('ao.store')->middleware('permission:ao,create');
+    Route::post('/{id}', [AOController::class, 'update'])->name('ao.update')->middleware('permission:ao,update');
+    Route::delete('/{id}', [AOController::class, 'destroy'])->name('ao.destroy')->middleware('permission:ao,delete');
 });
 
 // Memorandum Orders
-Route::prefix('v1/mo')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [MOImportController::class, 'import']);
+Route::prefix('v1/mo')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [MOImportController::class, 'import'])->middleware('permission:mo,create');
     Route::get('/import/template', [MOImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [MOController::class, 'bulkDelete'])->name('mo.bulk-delete');
+    Route::post('/bulk-delete', [MOController::class, 'bulkDelete'])->name('mo.bulk-delete')->middleware('permission:mo,delete');
 
-    Route::get('/', [MOController::class, 'index'])->name('mo.index');
-    Route::post('/', [MOController::class, 'store'])->name('mo.store');
-    Route::post('/{id}', [MOController::class, 'update'])->name('mo.update');
-    Route::delete('/{id}', [MOController::class, 'destroy'])->name('mo.destroy');
+    Route::get('/', [MOController::class, 'index'])->name('mo.index')->middleware('permission:mo,view');
+    Route::post('/', [MOController::class, 'store'])->name('mo.store')->middleware('permission:mo,create');
+    Route::post('/{id}', [MOController::class, 'update'])->name('mo.update')->middleware('permission:mo,update');
+    Route::delete('/{id}', [MOController::class, 'destroy'])->name('mo.destroy')->middleware('permission:mo,delete');
 });
 
 // Memorandum Circulars
-Route::prefix('v1/mc')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [MCImportController::class, 'import']);
+Route::prefix('v1/mc')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [MCImportController::class, 'import'])->middleware('permission:mc,create');
     Route::get('/import/template', [MCImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [MCController::class, 'bulkDelete'])->name('mc.bulk-delete');
+    Route::post('/bulk-delete', [MCController::class, 'bulkDelete'])->name('mc.bulk-delete')->middleware('permission:mc,delete');
 
-    Route::get('/', [MCController::class, 'index'])->name('mc.index');
-    Route::post('/', [MCController::class, 'store'])->name('mc.store');
-    Route::post('/{id}', [MCController::class, 'update'])->name('mc.update');
-    Route::delete('/{id}', [MCController::class, 'destroy'])->name('mc.destroy');
+    Route::get('/', [MCController::class, 'index'])->name('mc.index')->middleware('permission:mc,view');
+    Route::post('/', [MCController::class, 'store'])->name('mc.store')->middleware('permission:mc,create');
+    Route::post('/{id}', [MCController::class, 'update'])->name('mc.update')->middleware('permission:mc,update');
+    Route::delete('/{id}', [MCController::class, 'destroy'])->name('mc.destroy')->middleware('permission:mc,delete');
 });
 
 // General Orders
-Route::prefix('v1/genor')->group(function () {
-    // Main CRUD
-
-    // Import Features
-    Route::post('/import', [GenorImportController::class, 'import']);
+Route::prefix('v1/genor')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [GenorImportController::class, 'import'])->middleware('permission:genor,create');
     Route::get('/import/template', [GenorImportController::class, 'downloadTemplate']);
-    Route::post('/bulk-delete', [GenorController::class, 'bulkDelete'])->name('genor.bulk-delete');
+    Route::post('/bulk-delete', [GenorController::class, 'bulkDelete'])->name('genor.bulk-delete')->middleware('permission:genor,delete');
 
-    Route::get('/', [GenorController::class, 'index'])->name('genor.index');
-    Route::post('/', [GenorController::class, 'store'])->name('genor.store');
-    Route::post('/{id}', [GenorController::class, 'update'])->name('genor.update');
-    Route::delete('/{id}', [GenorController::class, 'destroy'])->name('genor.destroy');
+    Route::get('/', [GenorController::class, 'index'])->name('genor.index')->middleware('permission:genor,view');
+    Route::post('/', [GenorController::class, 'store'])->name('genor.store')->middleware('permission:genor,create');
+    Route::post('/{id}', [GenorController::class, 'update'])->name('genor.update')->middleware('permission:genor,update');
+    Route::delete('/{id}', [GenorController::class, 'destroy'])->name('genor.destroy')->middleware('permission:genor,delete');
 });
 
 // User Management
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
-Route::post('/users', [UserController::class, 'store']);
-Route::post('/upload-users', [UserController::class, 'uploadUsers']);
-Route::put('/users/{id}', [UserController::class, 'update']);
-Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users,delete');
+    Route::post('/users', [UserController::class, 'store'])->middleware('permission:users,create');
+    Route::post('/upload-users', [UserController::class, 'uploadUsers'])->middleware('permission:users,create');
+    Route::put('/users/{id}', [UserController::class, 'update'])->middleware('permission:users,update');
+    Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->middleware('permission:users,update');
+});
 
 // Activity log
-Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+Route::get('/activity-logs', [ActivityLogController::class, 'index'])->middleware('auth:sanctum', 'permission:logs,view');
 
-Route::prefix('profile-pictures')->group(function () {
+Route::prefix('profile-pictures')->middleware('auth:sanctum')->group(function () {
     Route::post('/', [ProfilePictureController::class, 'store'])->name('profile-pictures.store');
+});
+
+// Permission management
+Route::middleware('auth:sanctum', 'permission:users,view')->prefix('v1/permissions')->group(function () {
+    Route::get('/', [PermissionController::class, 'index']);
+    Route::post('/update', [PermissionController::class, 'update']);
+    Route::post('/add-role', [PermissionController::class, 'addRole']);
 });

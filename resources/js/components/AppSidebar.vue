@@ -1,41 +1,66 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, UserRoundCog, Gavel, FileUp, FileText, BarChart3 } from 'lucide-vue-next';
+import { LayoutGrid, UserRoundCog, Gavel, FileUp, FileText, BarChart3, Settings2, Shield } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { usePermissions } from '@/composables/usePermissions';
 
-const user = usePage().props.auth.user;
+const { can, isAdmin } = usePermissions();
 
-const mainNavItems: NavItem[] = [
-    { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
-    { title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel },
-    { title: 'Republic Acts', href: route('republic.index'), icon: Gavel },
-    {
-        title: 'Executive Issuances',
-        href: '#',
-        icon: FileText,
-        children: [
-            { title: 'Presidential Decrees', href: route('presidential.index') }, 
-            { title: 'Executive Orders', href: route('execord.index') },
-            { title: 'Administrative Orders', href: route('ao.index') },
-            { title: 'Memorandum Orders', href: route('mo.index') },
-            { title: 'Memorandum Circulars', href: route('mc.index') },
-            { title: 'Proclamations', href: route('proclamation.index') },
-            { title: 'General Orders', href: route('genor.index') },
-            { title: 'Special Orders', href: route('dashboard') },
-        ],
-    },
-    { title: 'User Management', href: route('users.index'), icon: UserRoundCog },
-];
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [];
 
-const adminNavItems: NavItem[] = [
-    { title: 'Import Cases', href: route('jurisprudence.index'), icon: FileUp },
-];
+    items.push({ title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid });
+
+    if (can('jurisprudence', 'view')) {
+        items.push({ title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel });
+    }
+    if (can('republic', 'view')) {
+        items.push({ title: 'Republic Acts', href: route('republic.index'), icon: Gavel });
+    }
+
+    const issuancesChildren: NavItem[] = [];
+    if (can('presidential', 'view')) issuancesChildren.push({ title: 'Presidential Decrees', href: route('presidential.index') });
+    if (can('execord', 'view')) issuancesChildren.push({ title: 'Executive Orders', href: route('execord.index') });
+    if (can('ao', 'view')) issuancesChildren.push({ title: 'Administrative Orders', href: route('ao.index') });
+    if (can('mo', 'view')) issuancesChildren.push({ title: 'Memorandum Orders', href: route('mo.index') });
+    if (can('mc', 'view')) issuancesChildren.push({ title: 'Memorandum Circulars', href: route('mc.index') });
+    if (can('proclamation', 'view')) issuancesChildren.push({ title: 'Proclamations', href: route('proclamation.index') });
+    if (can('genor', 'view')) issuancesChildren.push({ title: 'General Orders', href: route('genor.index') });
+
+    if (issuancesChildren.length > 0) {
+        items.push({
+            title: 'Executive Issuances',
+            href: '#',
+            icon: FileText,
+            children: issuancesChildren,
+        });
+    }
+
+    if (can('users', 'view')) {
+        items.push({ title: 'User Management', href: route('users.index'), icon: UserRoundCog });
+    }
+
+    return items;
+});
+
+const adminNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [];
+
+    if (can('jurisprudence', 'create')) {
+        items.push({ title: 'Import Cases', href: route('jurisprudence.index'), icon: FileUp });
+    }
+    if (can('users', 'view')) {
+        items.push({ title: 'Permissions', href: route('permissions.index'), icon: Shield });
+    }
+
+    return items;
+});
 
 const reportItems = ref([
     {
@@ -68,7 +93,7 @@ const reportItems = ref([
         <SidebarContent>
             <NavMain :items="mainNavItems" group-label="Navigation"/>
 
-            <div v-if="user.role === 'admin'">
+            <div v-if="isAdmin">
                 <NavMain :items="adminNavItems" group-label="Data Management"/>
             </div>
             

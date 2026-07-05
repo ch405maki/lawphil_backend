@@ -43,7 +43,7 @@ const deleteCase = async () => {
   processing.value = true;
 
   try {
-    const response = await axios.delete(`/api/v1/republic-acts/${props.raId}`, {
+    const response = await axios.delete(`/api/v1/republic/${props.raId}`, {
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
       }
