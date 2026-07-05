@@ -45,10 +45,10 @@ Route::prefix('public')->group(function () {
 
 Route::get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
+})->middleware('auth');
 
 // Jurisprudence Management
-Route::middleware('auth:sanctum')->prefix('jurisprudence')->group(function () {
+Route::middleware('auth')->prefix('jurisprudence')->group(function () {
     Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/bulk-delete', [JurisprudenceController::class, 'bulkDelete'])->name('jurisprudence.bulk-delete');
@@ -56,13 +56,13 @@ Route::middleware('auth:sanctum')->prefix('jurisprudence')->group(function () {
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
 });
 
-Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1')->middleware('auth')->group(function () {
     Route::post('/jurisprudence/import', [JurisprudenceImportController::class, 'import'])->middleware('permission:jurisprudence,create');
     Route::get('/jurisprudence/import/template', [JurisprudenceImportController::class, 'downloadTemplate']);
 });
 
 // Presidential Management
-Route::prefix('v1/presidential')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/presidential')->middleware('auth')->group(function () {
     Route::post('/import', [PresidentialImportController::class, 'import'])->middleware('permission:presidential,create');
     Route::get('/import/template', [PresidentialImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [PresidentialController::class, 'bulkDelete'])->name('presidential.bulk-delete')->middleware('permission:presidential,delete');
@@ -74,7 +74,7 @@ Route::prefix('v1/presidential')->middleware('auth:sanctum')->group(function () 
 });
 
 // Proclamations Management
-Route::prefix('v1/proclamations')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/proclamations')->middleware('auth')->group(function () {
     Route::post('/import', [ProclamationImportController::class, 'import'])->middleware('permission:proclamation,create');
     Route::get('/import/template', [ProclamationImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [ProclamationController::class, 'bulkDelete'])->name('proclamations.bulk-delete')->middleware('permission:proclamation,delete');
@@ -86,7 +86,7 @@ Route::prefix('v1/proclamations')->middleware('auth:sanctum')->group(function ()
 });
 
 // Republic Acts Management
-Route::prefix('v1/republic')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/republic')->middleware('auth')->group(function () {
     Route::post('/import', [RepublicImportController::class, 'import'])->middleware('permission:republic,create');
     Route::get('/import/template', [RepublicImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [RepublicController::class, 'bulkDelete'])->name('republic.bulk-delete')->middleware('permission:republic,delete');
@@ -98,7 +98,7 @@ Route::prefix('v1/republic')->middleware('auth:sanctum')->group(function () {
 });
 
 // Executive Orders 
-Route::prefix('v1/execord')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/execord')->middleware('auth')->group(function () {
     Route::post('/import', [ExecordImportController::class, 'import'])->middleware('permission:execord,create');
     Route::get('/import/template', [ExecordImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [ExecordController::class, 'bulkDelete'])->name('execord.bulk-delete')->middleware('permission:execord,delete');
@@ -110,7 +110,7 @@ Route::prefix('v1/execord')->middleware('auth:sanctum')->group(function () {
 });
 
 // Administrative Orders
-Route::prefix('v1/ao')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/ao')->middleware('auth')->group(function () {
     Route::post('/import', [AOImportController::class, 'import'])->middleware('permission:ao,create');
     Route::get('/import/template', [AOImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [AOController::class, 'bulkDelete'])->name('ao.bulk-delete')->middleware('permission:ao,delete');
@@ -122,7 +122,7 @@ Route::prefix('v1/ao')->middleware('auth:sanctum')->group(function () {
 });
 
 // Memorandum Orders
-Route::prefix('v1/mo')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/mo')->middleware('auth')->group(function () {
     Route::post('/import', [MOImportController::class, 'import'])->middleware('permission:mo,create');
     Route::get('/import/template', [MOImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [MOController::class, 'bulkDelete'])->name('mo.bulk-delete')->middleware('permission:mo,delete');
@@ -134,7 +134,7 @@ Route::prefix('v1/mo')->middleware('auth:sanctum')->group(function () {
 });
 
 // Memorandum Circulars
-Route::prefix('v1/mc')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/mc')->middleware('auth')->group(function () {
     Route::post('/import', [MCImportController::class, 'import'])->middleware('permission:mc,create');
     Route::get('/import/template', [MCImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [MCController::class, 'bulkDelete'])->name('mc.bulk-delete')->middleware('permission:mc,delete');
@@ -146,7 +146,7 @@ Route::prefix('v1/mc')->middleware('auth:sanctum')->group(function () {
 });
 
 // General Orders
-Route::prefix('v1/genor')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1/genor')->middleware('auth')->group(function () {
     Route::post('/import', [GenorImportController::class, 'import'])->middleware('permission:genor,create');
     Route::get('/import/template', [GenorImportController::class, 'downloadTemplate']);
     Route::post('/bulk-delete', [GenorController::class, 'bulkDelete'])->name('genor.bulk-delete')->middleware('permission:genor,delete');
@@ -158,7 +158,7 @@ Route::prefix('v1/genor')->middleware('auth:sanctum')->group(function () {
 });
 
 // User Management
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('permission:users,delete');
     Route::post('/users', [UserController::class, 'store'])->middleware('permission:users,create');
     Route::post('/upload-users', [UserController::class, 'uploadUsers'])->middleware('permission:users,create');
@@ -167,14 +167,14 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Activity log
-Route::get('/activity-logs', [ActivityLogController::class, 'index'])->middleware('auth:sanctum', 'permission:logs,view');
+Route::get('/activity-logs', [ActivityLogController::class, 'index'])->middleware('auth', 'permission:logs,view');
 
-Route::prefix('profile-pictures')->middleware('auth:sanctum')->group(function () {
+Route::prefix('profile-pictures')->middleware('auth')->group(function () {
     Route::post('/', [ProfilePictureController::class, 'store'])->name('profile-pictures.store');
 });
 
 // Permission management
-Route::middleware('auth:sanctum', 'permission:users,view')->prefix('v1/permissions')->group(function () {
+Route::middleware('auth', 'permission:users,view')->prefix('v1/permissions')->group(function () {
     Route::get('/', [PermissionController::class, 'index']);
     Route::post('/update', [PermissionController::class, 'update']);
     Route::post('/add-role', [PermissionController::class, 'addRole']);
