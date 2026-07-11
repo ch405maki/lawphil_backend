@@ -33,7 +33,7 @@ use App\Http\Controllers\Api\v1\ArchiveController;
 |--------------------------------------------------------------------------
 */
 Route::prefix('public')->group(function () {
-    Route::get('/archives', [ArchiveController::class, 'index']);
+    Route::get('/archives/{module}', [ArchiveController::class, 'show']);
     Route::get('/jurisprudence', [JurisprudenceController::class, 'index']);
     Route::get('/presidential', [PresidentialController::class, 'index']);
     Route::get('/proclamations', [ProclamationController::class, 'index']);
