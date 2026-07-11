@@ -25,13 +25,15 @@ use App\Http\Controllers\Api\v1\GenorImportController;
 use App\Models\Presidential;
 use App\Http\Controllers\Api\v1\ActivityLogController;
 use App\Http\Controllers\Api\v1\PermissionController;
+use App\Http\Controllers\Api\v1\ArchiveController;
 
 /*
 |--------------------------------------------------------------------------
-| Public API (no auth:sanctumentication required)
+| Public API (no authentication required)
 |--------------------------------------------------------------------------
 */
 Route::prefix('public')->group(function () {
+    Route::get('/archives', [ArchiveController::class, 'index']);
     Route::get('/jurisprudence', [JurisprudenceController::class, 'index']);
     Route::get('/presidential', [PresidentialController::class, 'index']);
     Route::get('/proclamations', [ProclamationController::class, 'index']);
