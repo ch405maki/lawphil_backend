@@ -20,8 +20,18 @@ const mainNavItems = computed<NavItem[]>(() => {
     if (can('jurisprudence', 'view')) {
         items.push({ title: 'Jurisprudence', href: route('jurisprudence.index'), icon: Gavel });
     }
+    const statutesChildren: NavItem[] = [];
     if (can('republic', 'view')) {
-        items.push({ title: 'Republic Acts', href: route('republic.index'), icon: Gavel });
+        statutesChildren.push({ title: 'Republic Acts', href: route('republic.index') });
+    }
+
+    if (statutesChildren.length > 0) {
+        items.push({
+            title: 'Statutes',
+            href: '#',
+            icon: Gavel,
+            children: statutesChildren,
+        });
     }
 
     const issuancesChildren: NavItem[] = [];
