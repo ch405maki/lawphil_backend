@@ -21,6 +21,7 @@ const formData = reactive({
   tenure: '',
   url: '',
   pdf_availability: false,
+  description: '',
   pdf_path: ''
 });
 
@@ -30,6 +31,7 @@ const errors = reactive({
   citation: '',
   tenure: '',
   url: '',
+  description: '',
   pdf_path: ''
 });
 
@@ -62,6 +64,7 @@ const clearForm = () => {
   formData.tenure = '';
   formData.url = '';
   formData.pdf_availability = false;
+  formData.description = '';
   formData.pdf_path = '';
 
   Object.keys(errors).forEach(key => {
@@ -180,13 +183,27 @@ const resetForm = () => {
 
       <div class="grid grid-cols-1 gap-4">
         <div>
-          <Label for="citation">Description</Label>
+          <Label for="description">Description</Label>
           <Textarea
-            id="citation"
-            v-model="formData.citation"
+            id="description"
+            v-model="formData.description"
             placeholder="Enter description here..."
             :disabled="isLoading"
             rows="3"
+            :class="{ 'border-red-500': errors.description }"
+          />
+          <p v-if="errors.description" class="text-sm text-red-500">{{ errors.description }}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label for="citation">Citation</Label>
+          <Input
+            id="citation"
+            v-model="formData.citation"
+            type="text"
+            placeholder="e.g., 123 SCRA 456"
+            :disabled="isLoading"
             :class="{ 'border-red-500': errors.citation }"
           />
           <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
