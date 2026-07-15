@@ -12,7 +12,7 @@ class AO extends Model
         'user_id',
         'ao_number', 
         'date', 
-        'citation', 
+        'citation',
         'tenure', 
         'url', 
         'pdf_availability',
