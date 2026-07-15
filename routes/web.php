@@ -14,6 +14,9 @@ use App\Http\Controllers\Web\AOController;
 use App\Http\Controllers\Web\MOController;
 use App\Http\Controllers\Web\MCController;
 use App\Http\Controllers\Web\GenorController;
+use App\Http\Controllers\Web\ActController;
+use App\Http\Controllers\Web\BatasPambansaController;
+use App\Http\Controllers\Web\CommonWealthController;
 
 
 Route::get('/', function () {
@@ -80,6 +83,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('genor')->group(function () {
     Route::get('/', [GenorController::class, 'index'])->name('genor.index')->middleware('permission:genor,view');
     Route::get('/create', [GenorController::class, 'create'])->name('genor.create')->middleware('permission:genor,create');
+    });
+
+    //acts
+    Route::prefix('acts')->group(function () {
+    Route::get('/', [ActController::class, 'index'])->name('acts.index')->middleware('permission:acts,view');
+    Route::get('/create', [ActController::class, 'create'])->name('acts.create')->middleware('permission:acts,create');
+    });
+
+    //batas pambansa
+    Route::prefix('batas-pambansa')->group(function () {
+    Route::get('/', [BatasPambansaController::class, 'index'])->name('batas_pambansa.index')->middleware('permission:batas_pambansa,view');
+    Route::get('/create', [BatasPambansaController::class, 'create'])->name('batas_pambansa.create')->middleware('permission:batas_pambansa,create');
+    });
+
+    //commonwealth
+    Route::prefix('commonwealth')->group(function () {
+    Route::get('/', [CommonWealthController::class, 'index'])->name('commonwealth.index')->middleware('permission:commonwealth,view');
+    Route::get('/create', [CommonWealthController::class, 'create'])->name('commonwealth.create')->middleware('permission:commonwealth,create');
     });
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index')->middleware('permission:users,view');

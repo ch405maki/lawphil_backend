@@ -26,6 +26,12 @@ use App\Models\Presidential;
 use App\Http\Controllers\Api\v1\ActivityLogController;
 use App\Http\Controllers\Api\v1\PermissionController;
 use App\Http\Controllers\Api\v1\ArchiveController;
+use App\Http\Controllers\Api\v1\ActController;
+use App\Http\Controllers\Api\v1\ActImportController;
+use App\Http\Controllers\Api\v1\BatasPambansaController;
+use App\Http\Controllers\Api\v1\BatasPambansaImportController;
+use App\Http\Controllers\Api\v1\CommonWealthController;
+use App\Http\Controllers\Api\v1\CommonWealthImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +49,9 @@ Route::prefix('public')->group(function () {
     Route::get('/mo', [MOController::class, 'index']);
     Route::get('/mc', [MCController::class, 'index']);
     Route::get('/genor', [GenorController::class, 'index']);
+    Route::get('/acts', [ActController::class, 'index']);
+    Route::get('/batas-pambansa', [BatasPambansaController::class, 'index']);
+    Route::get('/commonwealth', [CommonWealthController::class, 'index']);
 });
 
 Route::get('/user', function (Request $request) {
@@ -140,6 +149,36 @@ Route::prefix('v1/genor')->middleware('auth:sanctum')->group(function () {
     Route::post('/', [GenorController::class, 'store'])->name('genor.store')->middleware('permission:genor,create');
     Route::post('/{id}', [GenorController::class, 'update'])->name('genor.update')->middleware('permission:genor,update');
     Route::delete('/{id}', [GenorController::class, 'destroy'])->name('genor.destroy')->middleware('permission:genor,delete');
+});
+
+// Acts
+Route::prefix('v1/acts')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [ActImportController::class, 'import'])->middleware('permission:acts,create');
+    Route::get('/import/template', [ActImportController::class, 'downloadTemplate']);
+    Route::get('/', [ActController::class, 'index'])->name('acts.index')->middleware('permission:acts,view');
+    Route::post('/', [ActController::class, 'store'])->name('acts.store')->middleware('permission:acts,create');
+    Route::post('/{id}', [ActController::class, 'update'])->name('acts.update')->middleware('permission:acts,update');
+    Route::delete('/{id}', [ActController::class, 'destroy'])->name('acts.destroy')->middleware('permission:acts,delete');
+});
+
+// Batas Pambansa
+Route::prefix('v1/batas-pambansa')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [BatasPambansaImportController::class, 'import'])->middleware('permission:batas_pambansa,create');
+    Route::get('/import/template', [BatasPambansaImportController::class, 'downloadTemplate']);
+    Route::get('/', [BatasPambansaController::class, 'index'])->name('batas_pambansa.index')->middleware('permission:batas_pambansa,view');
+    Route::post('/', [BatasPambansaController::class, 'store'])->name('batas_pambansa.store')->middleware('permission:batas_pambansa,create');
+    Route::post('/{id}', [BatasPambansaController::class, 'update'])->name('batas_pambansa.update')->middleware('permission:batas_pambansa,update');
+    Route::delete('/{id}', [BatasPambansaController::class, 'destroy'])->name('batas_pambansa.destroy')->middleware('permission:batas_pambansa,delete');
+});
+
+// Commonwealth
+Route::prefix('v1/commonwealth')->middleware('auth:sanctum')->group(function () {
+    Route::post('/import', [CommonWealthImportController::class, 'import'])->middleware('permission:commonwealth,create');
+    Route::get('/import/template', [CommonWealthImportController::class, 'downloadTemplate']);
+    Route::get('/', [CommonWealthController::class, 'index'])->name('commonwealth.index')->middleware('permission:commonwealth,view');
+    Route::post('/', [CommonWealthController::class, 'store'])->name('commonwealth.store')->middleware('permission:commonwealth,create');
+    Route::post('/{id}', [CommonWealthController::class, 'update'])->name('commonwealth.update')->middleware('permission:commonwealth,update');
+    Route::delete('/{id}', [CommonWealthController::class, 'destroy'])->name('commonwealth.destroy')->middleware('permission:commonwealth,delete');
 });
 
 // User Management

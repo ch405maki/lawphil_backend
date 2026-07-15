@@ -24,6 +24,15 @@ const mainNavItems = computed<NavItem[]>(() => {
     if (can('republic', 'view')) {
         statutesChildren.push({ title: 'Republic Acts', href: route('republic.index') });
     }
+    if (can('acts', 'view')) {
+        statutesChildren.push({ title: 'Acts', href: route('acts.index') });
+    }
+    if (can('batas_pambansa', 'view')) {
+        statutesChildren.push({ title: 'Batas Pambansa', href: route('batas_pambansa.index') });
+    }
+    if (can('commonwealth', 'view')) {
+        statutesChildren.push({ title: 'Commonwealth', href: route('commonwealth.index') });
+    }
 
     if (statutesChildren.length > 0) {
         items.push({

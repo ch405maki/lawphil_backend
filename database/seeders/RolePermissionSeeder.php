@@ -17,6 +17,9 @@ class RolePermissionSeeder extends Seeder
         'mo',
         'mc',
         'genor',
+        'acts',
+        'batas_pambansa',
+        'commonwealth',
         'users',
         'logs',
     ];
