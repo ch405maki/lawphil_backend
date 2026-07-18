@@ -38,6 +38,9 @@ use App\Http\Controllers\Api\v1\CommonWealthImportController;
 | Public API (no authentication required)
 |--------------------------------------------------------------------------
 */
+// Old endpoint (for cached clients)
+Route::redirect('/jurisprudence', '/public/jurisprudence', 301);
+
 Route::prefix('public')->group(function () {
     Route::get('/archives/{module}', [ArchiveController::class, 'show']);
     Route::get('/jurisprudence', [JurisprudenceController::class, 'index']);
