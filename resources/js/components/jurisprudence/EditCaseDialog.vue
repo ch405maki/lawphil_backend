@@ -87,6 +87,13 @@ const formData = ref({
   pdf_path: '',
 });
 
+// Auto-fill SCRA prefix when reference field is focused
+const autoFillSCRA = () => {
+  if (!formData.value.reference) {
+    formData.value.reference = 'SCRA ';
+  }
+};
+
 // Watch for caseData changes to populate form
 watch(() => props.caseData, (newData) => {
   if (newData && newData.id) {
@@ -229,6 +236,7 @@ const closeDialog = () => {
               id="reference"
               v-model="formData.reference"
               :disabled="processing"
+              @focus="autoFillSCRA"
             />
           </div>
         </div>

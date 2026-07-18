@@ -58,6 +58,13 @@ watch(perCuriam, (val) => {
   }
 });
 
+// Auto-fill SCRA prefix when reference field is focused
+const autoFillSCRA = () => {
+  if (!formData.reference) {
+    formData.reference = 'SCRA ';
+  }
+};
+
 // Auto-fill from duplicate selection
 watch(() => props.duplicateData, (val) => {
   if (!val) return;
@@ -174,7 +181,7 @@ const resetForm = () => {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
         <Label for="gr_number">
-          GR <span class="text-red-500">*</span>
+          Case No. <span class="text-red-500">*</span>
         </Label>
         <Input
           id="gr_number"
@@ -208,6 +215,7 @@ const resetForm = () => {
           placeholder="e.g., Volume 123, Page 456"
           :disabled="isLoading"
           :class="{ 'border-red-500': errors.reference }"
+          @focus="autoFillSCRA"
         />
         <p v-if="errors.reference" class="text-sm text-red-500">{{ errors.reference }}</p>
       </div>

@@ -307,7 +307,7 @@ defineExpose({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead class="w-[15%]">G.R. & Date</TableHead>
+              <TableHead class="w-[15%]">Case No. & Date</TableHead>
               <TableHead class="w-[40%]">Case Title</TableHead>
               <TableHead class="w-[15%] text-center">URL</TableHead>
               <TableHead class="w-[10%] text-center">PDF</TableHead>
