@@ -18,7 +18,8 @@ class Presidential extends Model
         'url', 
         'pdf_availability',
         'pdf_path',
-        'subject' 
+        'subject',
+        'tenure'
     ];
 
     protected $casts = [

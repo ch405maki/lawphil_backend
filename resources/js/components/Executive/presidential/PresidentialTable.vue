@@ -87,6 +87,7 @@ const currentDecree = ref({
     subject: '',
     ponente: '',
     reference: '',
+    tenure: '',
     url: '',
     pdf_availability: false,
     pdf_path: ''
@@ -356,10 +357,10 @@ defineExpose({
               </TableCell>
               <TableCell>
                 <div class="font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                  {{ item.subject }}
+                  {{ item.citation }}
                 </div>
                 <div class="text-xs text-muted-foreground mt-1">
-                  Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
+                  Ponente: {{ item.ponente || 'N/A' }} • Tenure: {{ item.tenure || 'N/A' }} • Vol: {{ item.reference }}
                 </div>
               </TableCell>
               <TableCell class="text-center">

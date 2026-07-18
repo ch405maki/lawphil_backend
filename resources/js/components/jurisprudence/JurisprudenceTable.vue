@@ -356,7 +356,8 @@ defineExpose({
                   {{ item.citation }}
                 </div>
                 <div class="text-xs text-muted-foreground mt-1">
-                  Ponente: {{ item.ponente || 'N/A' }} • Vol: {{ item.reference }}
+                  <span v-if="item.ponente === 'Per Curiam'">Per Curiam</span>
+                  <span v-else>Ponente: {{ item.ponente || 'N/A' }}</span> • Vol: {{ item.reference }}
                 </div>
               </TableCell>
               <TableCell class="text-center">

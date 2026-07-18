@@ -33,6 +33,7 @@ interface PresDecData {
   url: string;
   pdf_availability?: boolean;
   subject: string;
+  tenure: string;
   pdf_path: string;
 }
 
@@ -45,6 +46,7 @@ interface ValidationErrors {
   url?: string[];
   pdf_availability?: string[];
   subject?: string[];
+  tenure?: string[];
   pdf_path?: string[];
 }
 
@@ -75,6 +77,7 @@ const formData = ref({
   url: '',
   pdf_availability: false,
   subject: '',
+  tenure: '',
   pdf_path: '',
 });
 
@@ -90,6 +93,7 @@ watch(() => props.presdecData, (newData) => {
       url: newData.url || '',
       pdf_availability: newData.pdf_availability || false,
       subject: newData.subject || '',
+      tenure: newData.tenure || '',
       pdf_path: newData.pdf_path || '',
     };
   }
@@ -115,6 +119,7 @@ const updateCase = async () => {
         url: formData.value.url,
         pdf_availability: formData.value.pdf_availability,
         subject: formData.value.subject,
+        tenure: formData.value.tenure,
         pdf_path: formData.value.pdf_path,
       },
       {
@@ -219,6 +224,16 @@ const closeDialog = () => {
               :disabled="processing"
             />
           </div>
+        </div>
+
+        <div class="space-y-2">
+          <Label for="tenure">Tenure</Label>
+          <Input
+            id="tenure"
+            v-model="formData.tenure"
+            placeholder="e.g., Justice Dela Cruz"
+            :disabled="processing"
+          />
         </div>
 
         <div class="space-y-2">

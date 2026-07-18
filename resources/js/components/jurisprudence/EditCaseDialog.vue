@@ -65,6 +65,15 @@ const emit = defineEmits<{
 
 const processing = ref(false);
 const errors = ref<ValidationErrors>({});
+const perCuriam = ref(false);
+
+watch(perCuriam, (val) => {
+  if (val) {
+    formData.value.ponente = 'Per Curiam';
+  } else {
+    formData.value.ponente = '';
+  }
+});
 
 const formData = ref({
   gr_number: '',
@@ -92,6 +101,7 @@ watch(() => props.caseData, (newData) => {
       subject: newData.subject || '',
       pdf_path: newData.pdf_path || '',
     };
+    perCuriam.value = newData.ponente === 'Per Curiam';
   }
 }, { immediate: true });
 
@@ -200,18 +210,24 @@ const closeDialog = () => {
 
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label for="ponente">Ponente</Label>
-            <Input 
-              id="ponente" 
-              v-model="formData.ponente" 
-              :disabled="processing"
+            <div class="flex items-center gap-2">
+              <Label for="ponente" class="mb-0">Ponente</Label>
+              <div class="flex items-center gap-1.5">
+                <Checkbox id="per_curiam" v-model:checked="perCuriam" :disabled="processing" />
+                <Label for="per_curiam" class="text-sm font-medium cursor-pointer mb-0">Per Curiam</Label>
+              </div>
+            </div>
+            <Input
+              id="ponente"
+              v-model="formData.ponente"
+              :disabled="processing || perCuriam"
             />
           </div>
           <div class="space-y-2">
             <Label for="reference">Reference</Label>
-            <Input 
-              id="reference" 
-              v-model="formData.reference" 
+            <Input
+              id="reference"
+              v-model="formData.reference"
               :disabled="processing"
             />
           </div>
