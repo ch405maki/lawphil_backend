@@ -20,7 +20,8 @@ class RepublicController extends Controller
                 $s = $request->search;
                 $query->where(function($q) use ($s) {
                     $q->where('citation', 'LIKE', "%$s%")
-                    ->orWhere('ra_number', 'LIKE', "%$s%");
+                    ->orWhere('ra_number', 'LIKE', "%$s%")
+                    ->orWhere('tenure', 'LIKE', "%$s%");
                 });
             }
 

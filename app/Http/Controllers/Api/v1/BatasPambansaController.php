@@ -18,7 +18,8 @@ class BatasPambansaController extends Controller
                 $s = $request->search;
                 $query->where(function($q) use ($s) {
                     $q->where('citation', 'LIKE', "%$s%")
-                    ->orWhere('bp_number', 'LIKE', "%$s%");
+                    ->orWhere('bp_number', 'LIKE', "%$s%")
+                    ->orWhere('tenure', 'LIKE', "%$s%");
                 });
             }
 

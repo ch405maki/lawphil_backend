@@ -20,7 +20,8 @@ class ExecordController extends Controller
                 $s = $request->search;
                 $query->where(function($q) use ($s) {
                     $q->where('citation', 'LIKE', "%$s%")
-                    ->orWhere('execord_number', 'LIKE', "%$s%");
+                    ->orWhere('execord_number', 'LIKE', "%$s%")
+                    ->orWhere('tenure', 'LIKE', "%$s%");
                 });
             }
 
