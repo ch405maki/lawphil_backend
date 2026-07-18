@@ -202,6 +202,3 @@ class RepublicController extends Controller
         $query->orderBy($column, $direction);
     }
 }
-    }
-
-}
