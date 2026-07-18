@@ -38,8 +38,6 @@ use App\Http\Controllers\Api\v1\CommonWealthImportController;
 | Public API (no authentication required)
 |--------------------------------------------------------------------------
 */
-// Old endpoint (for cached clients)
-Route::redirect('/jurisprudence', '/public/jurisprudence', 301);
 
 Route::prefix('public')->group(function () {
     Route::get('/archives/{module}', [ArchiveController::class, 'show']);
@@ -61,9 +59,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Backward compatibility for cached clients
+Route::get('/jurisprudence', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
+
 // Jurisprudence Management
 Route::middleware('auth:sanctum')->prefix('jurisprudence')->group(function () {
-    Route::get('/', [JurisprudenceController::class, 'index'])->name('jurisprudence.index');
     Route::post('/', [JurisprudenceController::class, 'store'])->name('jurisprudence.store');
     Route::post('/{id}', [JurisprudenceController::class, 'update'])->name('jurisprudence.update');
     Route::delete('/{id}', [JurisprudenceController::class, 'destroy'])->name('jurisprudence.destroy');
