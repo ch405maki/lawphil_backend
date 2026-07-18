@@ -7,37 +7,36 @@ use App\Models\BatasPambansa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class BatasPambansaController extends Controller
+class BatasPambansaController extends Controller 
 {
-    public function index(Request $request)
+    private const SORTABLE = [
+        'az'     => ['citation', 'asc'],
+        'za'     => ['citation', 'desc'],
+        'oldest' => ['date',      'asc'],
+        'newest' => ['date',      'desc'],
+    ];
+
+    private const SEARCHABLE_COLUMNS = [
+        'citation',
+        'bp_number',
+        'tenure',
+        'description',
+    ];
+
+    public function index(Request $request) 
     {
         try {
             $query = BatasPambansa::query();
 
-            if ($request->filled('search')) {
-                $s = $request->search;
-                $query->where(function($q) use ($s) {
-                    $q->where('citation', 'LIKE', "%$s%")
-                    ->orWhere('bp_number', 'LIKE', "%$s%")
-                    ->orWhere('tenure', 'LIKE', "%$s%");
-                });
-            }
+            $this->applySearch($query, $request->input('search'));
+            $this->applyYearFilter($query, $request->input('year'));
+            $this->applySort($query, $request->input('sort'));
 
-            if ($request->filled('year')) {
-                $query->whereYear('date', $request->year);
-            }
+            $rows = min((int) $request->input('rows', 10), 100);
 
-            if ($request->sort === 'az') {
-                $query->orderBy('citation', 'asc');
-            } elseif ($request->sort === 'za') {
-                $query->orderBy('citation', 'desc');
-            } elseif ($request->sort === 'oldest') {
-                $query->orderBy('date', 'asc');
-            } else {
-                $query->orderBy('date', 'desc');
-            }
-
-            return response()->json($query->paginate($request->get('rows', 10)));
+            return response()->json(
+                $query->paginate($rows)->withQueryString()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -159,5 +158,45 @@ class BatasPambansaController extends Controller
                 'message' => 'Failed to delete record: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    private function applySearch($query, ?string $search): void
+    {
+        if (blank($search)) {
+            return;
+        }
+
+        $keywords = collect(preg_split('/\s+/', trim($search)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($keywords as $keyword) {
+            $query->where(function ($q) use ($keyword) {
+                foreach (self::SEARCHABLE_COLUMNS as $column) {
+                    $q->orWhere($column, 'LIKE', "%{$keyword}%");
+                }
+            });
+        }
+    }
+
+    private function applyYearFilter($query, mixed $year): void
+    {
+        if (blank($year) || ! ctype_digit((string) $year)) {
+            return;
+        }
+
+        $query->whereYear('date', (int) $year);
+    }
+
+    private function applySort($query, ?string $sort): void
+    {
+        [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
+
+        $query->orderBy($column, $direction);
     }
 }
