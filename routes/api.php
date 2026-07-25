@@ -51,7 +51,7 @@ Route::prefix('public')->group(function () {
     Route::get('/mc', [MCController::class, 'index']);
     Route::get('/genor', [GenorController::class, 'index']);
     Route::get('/acts', [ActController::class, 'index']);
-    Route::get('/batas-pambansa', [BatasPambansaController::class, 'index']);
+    Route::get('/bataspambansa', [BatasPambansaController::class, 'index']);
     Route::get('/commonwealth', [CommonWealthController::class, 'index']);
 });
 

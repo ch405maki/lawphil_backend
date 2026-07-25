@@ -19,7 +19,7 @@ class ArchiveController extends Controller
         'mc'            => 'memorandum_circular',
         'genor'         => 'general_order',
         'acts'          => 'acts',
-        'batas_pambansa' => 'batas_pambansa',
+        'bataspambansa' => 'bataspambansa',
         'commonwealth'  => 'commonwealth',
     ];
 
