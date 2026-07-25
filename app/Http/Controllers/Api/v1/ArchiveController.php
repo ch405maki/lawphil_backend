@@ -18,6 +18,9 @@ class ArchiveController extends Controller
         'mo'            => 'memorandum_order',
         'mc'            => 'memorandum_circular',
         'genor'         => 'general_order',
+        'acts'          => 'acts',
+        'batas_pambansa' => 'batas_pambansa',
+        'commonwealth'  => 'commonwealth',
     ];
 
     public function show(string $module)
