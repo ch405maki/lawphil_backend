@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class PresidentialController extends Controller 
 {
+    private const NUMBER_COLUMN = 'pd_number';
+
     private const SORTABLE = [
         'az'     => ['citation', 'asc'],
         'za'     => ['citation', 'desc'],
@@ -210,5 +212,9 @@ class PresidentialController extends Controller
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
 
         $query->orderBy($column, $direction);
+
+        if (in_array($sort, ['oldest', 'newest'])) {
+            $query->orderByRaw('CAST(SUBSTRING_INDEX(' . self::NUMBER_COLUMN . ', "No. ", -1) AS UNSIGNED) ' . $direction);
+        }
     }
 }

@@ -9,7 +9,7 @@ export function formatDate(dateStr: string): string {
   const date = new Date(dateStr)
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: '2-digit'
   })
 }
@@ -18,7 +18,7 @@ export function formatDateTime(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleString('en-US', {
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',

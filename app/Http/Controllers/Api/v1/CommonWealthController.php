@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 
 class CommonWealthController extends Controller
 {
+    private const NUMBER_COLUMN = 'ca_number';
+
     private const SORTABLE = [
         'az'     => ['citation', 'asc'],
         'za'     => ['citation', 'desc'],
@@ -198,5 +200,9 @@ class CommonWealthController extends Controller
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
 
         $query->orderBy($column, $direction);
+
+        if (in_array($sort, ['oldest', 'newest'])) {
+            $query->orderByRaw('CAST(SUBSTRING_INDEX(' . self::NUMBER_COLUMN . ', "No. ", -1) AS UNSIGNED) ' . $direction);
+        }
     }
 }
