@@ -96,7 +96,7 @@ const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
     if (pdfPath.startsWith('http')) {
       return pdfPath;
     }
-    return `https://lawphil.net/statutes/bataspambansa/${pdfPath}`;
+    return `https://lawphil.net/statutes/bataspam/${pdfPath}`;
   }
 
   if (!url) return null;
@@ -110,7 +110,7 @@ const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
   const year = getYearFromFilename(url);
   const yearFolder = year ? `bp${year}/` : '';
   const pdfFileName = url.replace('.html', '.pdf');
-  return `https://lawphil.net/statutes/bataspambansa/${yearFolder}pdf/${pdfFileName}`;
+  return `https://lawphil.net/statutes/bataspam/${yearFolder}pdf/${pdfFileName}`;
 };
 
 const generateHtmlUrl = (url: string) => {
@@ -120,7 +120,7 @@ const generateHtmlUrl = (url: string) => {
   }
   const year = getYearFromFilename(url);
   const yearFolder = year ? `bp${year}/` : '';
-  return `https://lawphil.net/statutes/bataspambansa/${yearFolder}${url}`;
+  return `https://lawphil.net/statutes/bataspam/${yearFolder}${url}`;
 };
 
 let searchTimeout: ReturnType<typeof setTimeout>;
