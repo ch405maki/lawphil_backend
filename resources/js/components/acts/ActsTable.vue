@@ -91,7 +91,14 @@ const getYearFromFilename = (filename: string): string => {
   return match ? match[1] : '';
 };
 
-const generatePdfUrl = (url: string) => {
+const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
+  if (pdfPath && pdfPath.trim() !== '') {
+    if (pdfPath.startsWith('http')) {
+      return pdfPath;
+    }
+    return `https://lawphil.net/statutes/acts/${pdfPath}`;
+  }
+
   if (!url) return null;
   if (url.startsWith('http')) {
     const lastSlashIndex = url.lastIndexOf('/');
@@ -343,8 +350,8 @@ onMounted(() => {
               </TableCell>
               <TableCell class="text-center">
                 <a
-                  v-if="item.pdf_availability"
-                  :href="generatePdfUrl(item.url)"
+                  v-if="item.pdf_availability && (item.pdf_path || item.url)"
+                  :href="generatePdfUrl(item.pdf_path, item.url)"
                   target="_blank"
                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
                 >

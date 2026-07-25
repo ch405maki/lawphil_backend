@@ -93,27 +93,29 @@ const currentDecree = ref({
     pdf_path: ''
 });
 
-// Helper function to generate PDF URL from HTML URL
-// Modified helper function
-const generatePdfUrl = (item: any) => {
-  // 1. Kung may manual na full URL, gamitin agad
-  if (item.pdf_path && item.pdf_path.startsWith('http')) {
-    return item.pdf_path;
+const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
+  if (pdfPath && pdfPath.trim() !== '') {
+    if (pdfPath.startsWith('http')) {
+      return pdfPath;
+    }
+    return `https://lawphil.net/statutes/presdecs/${pdfPath}`;
   }
 
-  // 2. Kung ang pdf_path ay mukhang relative path na (e.g., "pd1984/pdf/pd_1912_1984.pdf")
-  if (item.pdf_path && item.pdf_path.endsWith('.pdf')) {
-    return `https://lawphil.net/statutes/presdecs/${item.pdf_path}`;
+  if (!url) return null;
+
+  if (url.startsWith('http')) {
+    const lastSlashIndex = url.lastIndexOf('/');
+    const fileName = url.substring(lastSlashIndex + 1);
+    const basePath = url.substring(0, lastSlashIndex);
+    const pdfFileName = fileName.replace('.html', '.pdf');
+    return `${basePath}/pdf/${pdfFileName}`;
   }
 
-  // 3. Fallback: Kung wala sa DB, i-generate galing sa URL (standard pattern)
-  if (!item.url) return null;
-  
-  const pdfUrl = item.url.replace('.html', '.pdf');
+  const pdfUrl = url.replace('.html', '.pdf');
   const parts = pdfUrl.split('/');
   const fileName = parts.pop();
   const folderPath = parts.join('/');
-  
+
   return `https://lawphil.net/statutes/presdecs/${folderPath}/pdf/${fileName}`;
 };
 
@@ -376,8 +378,8 @@ defineExpose({
               </TableCell>
               <TableCell class="text-center">
                 <a 
-                  v-if="item.pdf_availability" 
-                  :href="generatePdfUrl(item)" 
+                  v-if="item.pdf_availability && (item.pdf_path || item.url)" 
+                  :href="generatePdfUrl(item.pdf_path, item.url)" 
                   target="_blank" 
                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
                 >

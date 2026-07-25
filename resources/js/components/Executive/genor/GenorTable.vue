@@ -98,8 +98,14 @@ const getYearFromFilename = (filename: string): string => {
   return match ? match[1] : '';
 };
 
-// Helper function to generate PDF URL from HTML URL
-const generatePdfUrl = (url: string) => {
+const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
+  if (pdfPath && pdfPath.trim() !== '') {
+    if (pdfPath.startsWith('http')) {
+      return pdfPath;
+    }
+    return `https://lawphil.net/executive/genor/${pdfPath}`;
+  }
+
   if (!url) return null;
   
   if (url.startsWith('http')) {
@@ -110,12 +116,10 @@ const generatePdfUrl = (url: string) => {
     return `${basePath}/pdf/${pdfFileName}`;
   }
   
-  // Kung relative path lang (hal. "genor_1211_2026.html")
   const year = getYearFromFilename(url);
   const yearFolder = year ? `genor${year}/` : '';
   const pdfFileName = url.replace('.html', '.pdf');
   
-  // Walang double slash, at dynamic ang taon!
   return `https://lawphil.net/executive/genor/${yearFolder}pdf/${pdfFileName}`;
 };
 
@@ -386,8 +390,8 @@ defineExpose({
               </TableCell>
               <TableCell class="text-center">
                 <a 
-                  v-if="item.pdf_availability" 
-                  :href="generatePdfUrl(item.url)" 
+                  v-if="item.pdf_availability && (item.pdf_path || item.url)" 
+                  :href="generatePdfUrl(item.pdf_path, item.url)" 
                   target="_blank" 
                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
                 >
