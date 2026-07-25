@@ -376,7 +376,7 @@ defineExpose({
               </TableCell>
               <TableCell class="text-center">
                 <a 
-                  v-if="item.pdf_availability && item.url" 
+                  v-if="item.pdf_availability" 
                   :href="generatePdfUrl(item)" 
                   target="_blank" 
                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
