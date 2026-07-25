@@ -170,29 +170,6 @@ const closeDialog = () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="citation">Citation / Title</Label>
-                    <Textarea
-                        id="citation"
-                        v-model="formData.citation"
-                        :class="{ 'border-destructive': errors.citation }"
-                        rows="2"
-                        :disabled="processing"
-                    />
-                    <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <Label for="tenure">Tenure</Label>
-                        <Input id="tenure" v-model="formData.tenure" :disabled="processing" />
-                    </div>
-                    <div class="space-y-2">
-                        <Label for="url">Reference URL</Label>
-                        <Input id="url" v-model="formData.url" placeholder="https://..." :disabled="processing" />
-                    </div>
-                </div>
-
-                <div class="space-y-2">
                     <Label for="description">Description</Label>
                     <Textarea
                         id="description"
@@ -205,13 +182,12 @@ const closeDialog = () => {
                     <p v-if="errors.description" class="text-xs text-destructive">{{ errors.description[0] }}</p>
                 </div>
 
-                <div class="flex items-start gap-4">
-                    <div class="flex items-center space-x-2 pt-2">
-                        <Checkbox id="pdf_availability" v-model:checked="formData.pdf_availability" :disabled="processing" />
-                        <Label for="pdf_availability" class="cursor-pointer whitespace-nowrap"> PDF Available </Label>
-                    </div>
-
-                    <div class="flex-1">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2 mt-1">
+                        <div class="flex items-center space-x-2">
+                            <Checkbox id="pdf_availability" v-model:checked="formData.pdf_availability" :disabled="processing" />
+                            <Label for="pdf_availability" class="cursor-pointer whitespace-nowrap"> PDF Available </Label>
+                        </div>
                         <Input
                             id="pdf_path"
                             v-model="formData.pdf_path"
@@ -223,6 +199,22 @@ const closeDialog = () => {
                         />
                         <p v-if="errors.pdf_path" class="mt-1 text-xs text-destructive">{{ errors.pdf_path[0] }}</p>
                     </div>
+                    <div class="space-y-2">
+                        <Label for="url">Reference URL</Label>
+                        <Input id="url" v-model="formData.url" placeholder="https://..." :disabled="processing" />
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <Label for="citation">Other Keyword</Label>
+                    <Textarea
+                        id="citation"
+                        v-model="formData.citation"
+                        :class="{ 'border-destructive': errors.citation }"
+                        rows="2"
+                        :disabled="processing"
+                    />
+                    <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
                 </div>
             </div>
 

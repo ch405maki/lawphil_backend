@@ -68,6 +68,8 @@ const autoFillSCRA = () => {
 // Auto-fill from duplicate selection
 watch(() => props.duplicateData, (val) => {
   if (!val) return;
+  formData.gr_number = val.gr_number ?? '';
+  formData.date = val.date ? new Date(val.date).toISOString().split('T')[0] : '';
   formData.citation = val.citation ?? '';
   formData.ponente = val.ponente ?? '';
   formData.reference = val.reference ?? '';

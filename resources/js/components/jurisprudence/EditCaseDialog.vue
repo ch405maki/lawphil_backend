@@ -181,7 +181,7 @@ const closeDialog = () => {
       <div class="space-y-4 py-4">
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label for="gr_number">G.R. Number</Label>
+            <Label for="gr_number">Case No.</Label>
             <Input 
               id="gr_number" 
               v-model="formData.gr_number" 
