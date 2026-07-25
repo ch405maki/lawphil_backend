@@ -44,6 +44,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-vue-next';
+import { formatDate } from '@/lib/utils';
 
 // Props
 const props = defineProps<{
@@ -223,8 +224,6 @@ const confirmDelete = (id: number) => {
     showDeleteDialog.value = true;
 };
 
-
-const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
 
 const refreshData = () => {
     fetchData(decrees.value.current_page);
