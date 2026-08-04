@@ -13,6 +13,7 @@
         ChevronDown,
     } from 'lucide-vue-next';
     import { Link, usePage } from '@inertiajs/vue3';
+    import { reactive } from 'vue';
     import { type NavItem } from '@/types';
     import { type SharedData } from '@/types';
 
@@ -21,21 +22,25 @@
         isOpen?: boolean;
     }
 
-    defineProps<{
+    const props = defineProps<{
         items: DropdownNavItem[];
         groupLabel?: string;
     }>();
 
     const page = usePage<SharedData>();
 
-    const toggleDropdown = (item: DropdownNavItem) => {
-    if (item.children) {
-        item.isOpen = !item.isOpen;
-    }
+    const openState = reactive<Record<string, boolean>>({});
+
+    const isOpen = (item: DropdownNavItem) => {
+        return openState[item.title] ?? item.isOpen ?? false;
+    };
+
+    const setOpen = (item: DropdownNavItem, value: boolean) => {
+        openState[item.title] = value;
     };
 
     const isActive = (href: string) => {
-    return page.url.startsWith(href);
+        return page.url.startsWith(href);
     };
 </script>
 
@@ -61,9 +66,9 @@
             
             <!-- Dropdown menu items -->
             <template v-else>
-            <Collapsible :open="item.isOpen" class="group/collapsible">
+            <Collapsible :open="isOpen(item)" @update:open="(value) => setOpen(item, value as boolean)" class="group/collapsible">
                 <SidebarMenuItem>
-                <CollapsibleTrigger :class="{ 'border border-zinc-300/50': item.isOpen }" asChild @click="toggleDropdown(item)" >
+                <CollapsibleTrigger :class="{ 'border border-zinc-300/50': isOpen(item) }" asChild>
                     <SidebarMenuButton 
                         :is-active="item.children?.some(child => isActive(child.href))"
                         :tooltip="item.title"
@@ -72,7 +77,7 @@
                     <span>{{ item.title }}</span>
                     <ChevronDown 
                         class="w-4 h-4 ml-auto transition-transform duration-200" 
-                        :class="{ 'rotate-180': item.isOpen }" 
+                        :class="{ 'rotate-180': isOpen(item) }" 
                     />
                     </SidebarMenuButton>
                 </CollapsibleTrigger>

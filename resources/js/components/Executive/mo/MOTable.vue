@@ -105,7 +105,9 @@ const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
     if (pdfPath.startsWith('http')) {
       return pdfPath;
     }
-    return `https://lawphil.net/executive/mo/${pdfPath}`;
+    const year = getYearFromFilename(pdfPath);
+    const yearFolder = year ? `mo${year}/` : '';
+    return `https://lawphil.net/executive/mo/${yearFolder}pdf/${pdfPath}`;
   }
 
   if (!url) return null;
