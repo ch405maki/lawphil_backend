@@ -97,7 +97,9 @@ const generatePdfUrl = (pdfPath: string | null, url: string | null) => {
     if (pdfPath.startsWith('http')) {
       return pdfPath;
     }
-    return `https://lawphil.net/statutes/acts/${pdfPath}`;
+    const year = getYearFromFilename(pdfPath);
+    const yearFolder = year ? `act${year}/` : '';
+    return `https://lawphil.net/statutes/acts/${yearFolder}pdf/${pdfPath}`;
   }
 
   if (!url) return null;
@@ -331,9 +333,6 @@ onMounted(() => {
               <TableCell>
                 <div class="font-medium line-clamp-2 group-hover:text-primary transition-colors">
                   {{ item.description }}
-                </div>
-                <div class="text-xs text-muted-foreground mt-1">
-                  Tenure: {{ item.tenure || 'N/A' }}
                 </div>
               </TableCell>
               <TableCell class="text-center">
