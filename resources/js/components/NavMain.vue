@@ -29,18 +29,36 @@
 
     const page = usePage<SharedData>();
 
+    const STORAGE_KEY = 'sidebar_open_state';
+
+    const savedState = (() => {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Record<string, boolean>;
+        } catch {
+            return {};
+        }
+    })();
+
     const openState = reactive<Record<string, boolean>>({});
 
     const isOpen = (item: DropdownNavItem) => {
-        return openState[item.title] ?? item.isOpen ?? false;
+        return openState[item.title] ?? savedState[item.title] ?? item.isOpen ?? false;
     };
 
     const setOpen = (item: DropdownNavItem, value: boolean) => {
         openState[item.title] = value;
+        savedState[item.title] = value;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedState));
+        } catch {
+            // ignore storage errors
+        }
     };
 
     const isActive = (href: string) => {
-        return page.url.startsWith(href);
+        const targetPath = new URL(href, window.location.origin).pathname;
+        const currentPath = new URL(page.url, window.location.origin).pathname;
+        return currentPath === targetPath || currentPath.startsWith(targetPath.endsWith('/') ? targetPath : `${targetPath}/`);
     };
 </script>
 
@@ -54,10 +72,9 @@
             <SidebarMenuButton 
                 as-child 
                 :is-active="isActive(item.href)"
-                :class="{ 'border border-sidebar-border/70': isActive(item.href) }"
                 :tooltip="item.title"
                 >
-                <Link :href="item.href">
+                <Link :href="item.href" :class="{ 'bg-sidebar-accent text-sidebar-accent-foreground font-medium': isActive(item.href) }">
                 <component :is="item.icon" class="w-4 h-4" />
                 <span>{{ item.title }}</span>
                 </Link>
@@ -68,9 +85,10 @@
             <template v-else>
             <Collapsible :open="isOpen(item)" @update:open="(value) => setOpen(item, value as boolean)" class="group/collapsible">
                 <SidebarMenuItem>
-                <CollapsibleTrigger :class="{ 'border border-zinc-300/50': isOpen(item) }" asChild>
+                <CollapsibleTrigger asChild>
                     <SidebarMenuButton 
                         :is-active="item.children?.some(child => isActive(child.href))"
+                        :class="{ 'bg-sidebar-accent text-sidebar-accent-foreground font-medium': item.children?.some(child => isActive(child.href)) }"
                         :tooltip="item.title"
                         >
                     <component :is="item.icon" class="w-4 h-4" />
@@ -90,7 +108,7 @@
                         as-child
                         :is-active="isActive(child.href)"
                         >
-                        <Link :href="child.href">
+                        <Link :href="child.href" :class="{ 'bg-sidebar-accent text-sidebar-accent-foreground font-medium': isActive(child.href) }">
                         <component :is="child.icon" class="w-4 h-4" />
                         <span>{{ child.title }}</span>
                         </Link>
