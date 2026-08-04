@@ -28,7 +28,6 @@ interface PresDecData {
   pd_number: string;
   date: string;
   citation: string;
-  ponente: string;
   reference: string;
   url: string;
   pdf_availability?: boolean;
@@ -41,7 +40,6 @@ interface ValidationErrors {
   pd_number?: string[];
   date?: string[];
   citation?: string[];
-  ponente?: string[];
   reference?: string[];
   url?: string[];
   pdf_availability?: string[];
@@ -72,7 +70,6 @@ const formData = ref({
   pd_number: '',
   date: '',
   citation: '',
-  ponente: '',
   reference: '',
   url: '',
   pdf_availability: false,
@@ -88,7 +85,6 @@ watch(() => props.presdecData, (newData) => {
       pd_number: newData.pd_number || '',
       date: newData.date ? new Date(newData.date).toISOString().split('T')[0] : '',
       citation: newData.citation || '',
-      ponente: newData.ponente || '',
       reference: newData.reference || '',
       url: newData.url || '',
       pdf_availability: newData.pdf_availability || false,
@@ -114,7 +110,6 @@ const updateCase = async () => {
         pd_number: formData.value.pd_number,
         date: formData.value.date,
         citation: formData.value.citation,
-        ponente: formData.value.ponente,
         reference: formData.value.reference,
         url: formData.value.url,
         pdf_availability: formData.value.pdf_availability,
@@ -196,7 +191,7 @@ const closeDialog = () => {
         </div>
 
         <div class="space-y-2">
-          <Label for="citation"> Citation / Title</Label>
+          <Label for="citation">Description</Label>
           <Textarea 
             id="citation" 
             v-model="formData.citation" 
@@ -207,23 +202,13 @@ const closeDialog = () => {
           <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <Label for="ponente">Ponente</Label>
-            <Input 
-              id="ponente" 
-              v-model="formData.ponente" 
-              :disabled="processing"
-            />
-          </div>
-          <div class="space-y-2">
-            <Label for="reference">Reference</Label>
-            <Input 
-              id="reference" 
-              v-model="formData.reference" 
-              :disabled="processing"
-            />
-          </div>
+        <div class="space-y-2">
+          <Label for="reference">Reference</Label>
+          <Input 
+            id="reference" 
+            v-model="formData.reference" 
+            :disabled="processing"
+          />
         </div>
 
         <div class="space-y-2">
@@ -246,9 +231,8 @@ const closeDialog = () => {
           />
         </div>
 
-        <!-- Subject Field -->
         <div class="space-y-2">
-          <Label for="subject">Subject</Label>
+          <Label for="subject">Other Keyword</Label>
           <Textarea 
             id="subject" 
             v-model="formData.subject" 

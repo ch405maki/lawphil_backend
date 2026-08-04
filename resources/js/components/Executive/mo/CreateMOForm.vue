@@ -19,6 +19,7 @@ const formData = reactive({
   mo_number: '',
   date: '',
   citation: '',
+  description: '',
   tenure: '',
   url: '',
   pdf_availability: false,
@@ -30,6 +31,7 @@ const errors = reactive({
   mo_number: '',
   date: '',
   citation: '',
+  description: '',
   tenure: '',
   url: '',
   pdf_path: ''
@@ -66,6 +68,7 @@ const clearForm = () => {
   formData.mo_number = '';
   formData.date = '';
   formData.citation = '';
+  formData.description = '';
   formData.tenure = '';
   formData.url = '';
   formData.pdf_availability = false;
@@ -191,13 +194,28 @@ const resetForm = () => {
         
       <div class="grid grid-cols-1 gap-4">
         <div>
-          <Label for="citation">Description</Label>
+          <Label for="description">Description</Label>
+          <Textarea
+            id="description"
+            v-model="formData.description"
+            placeholder="Enter the description of the memorandum order"
+            :disabled="isLoading"
+            rows="3"
+            :class="{ 'border-red-500': errors.description }"
+          />
+          <p v-if="errors.description" class="text-sm text-red-500">{{ errors.description }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <Label for="citation">Other Keyword</Label>
           <Textarea
             id="citation"
             v-model="formData.citation"
-            placeholder="Enter description here..."
+            placeholder="Enter other keyword here..."
             :disabled="isLoading"
-            rows="3"
+            rows="2"
             :class="{ 'border-red-500': errors.citation }"
           />
           <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>

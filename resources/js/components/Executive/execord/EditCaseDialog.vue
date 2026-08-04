@@ -170,15 +170,16 @@ const closeDialog = () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="citation">Citation / Title</Label>
+                    <Label for="description">Description</Label>
                     <Textarea
-                        id="citation"
-                        v-model="formData.citation"
-                        :class="{ 'border-destructive': errors.citation }"
-                        rows="2"
+                        id="description"
+                        v-model="formData.description"
+                        :class="{ 'border-destructive': errors.description }"
+                        rows="3"
+                        placeholder="Enter the description of the proclamation"
                         :disabled="processing"
                     />
-                    <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
+                    <p v-if="errors.description" class="text-xs text-destructive">{{ errors.description[0] }}</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -193,16 +194,15 @@ const closeDialog = () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="description">Description</Label>
+                    <Label for="citation">Other Keyword</Label>
                     <Textarea
-                        id="description"
-                        v-model="formData.description"
-                        :class="{ 'border-destructive': errors.description }"
-                        rows="3"
-                        placeholder="Enter the description of the proclamation"
+                        id="citation"
+                        v-model="formData.citation"
+                        :class="{ 'border-destructive': errors.citation }"
+                        rows="2"
                         :disabled="processing"
                     />
-                    <p v-if="errors.description" class="text-xs text-destructive">{{ errors.description[0] }}</p>
+                    <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
                 </div>
 
                 <div class="flex items-start gap-4">

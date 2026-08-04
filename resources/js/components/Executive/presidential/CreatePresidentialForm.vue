@@ -19,6 +19,7 @@ const formData = reactive({
   pd_number: '',
   date: '',
   citation: '',
+  subject: '',
   tenure: '',
   reference: '',
   url: '',
@@ -31,6 +32,7 @@ const errors = reactive({
   pd_number: '',
   date: '',
   citation: '',
+  subject: '',
   tenure: '',
   reference: '',
   url: '',
@@ -68,6 +70,7 @@ const clearForm = () => {
   formData.pd_number = '';
   formData.date = '';
   formData.citation = '';
+  formData.subject = '';
   formData.tenure = '';
   formData.reference = '';
   formData.url = '';

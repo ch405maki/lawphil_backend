@@ -194,30 +194,30 @@ const resetForm = () => {
         
       <div class="grid grid-cols-1 gap-4">
         <div>
-          <Label for="citation">Citation</Label>
-          <Input
-            id="citation"
-            v-model="formData.citation"
-            placeholder="Enter citation"
-            :disabled="isLoading"
-            :class="{ 'border-red-500': errors.citation }"
-          />
-          <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-4">
-        <div>
           <Label for="description">Description</Label>
           <Textarea
             id="description"
             v-model="formData.description"
-            placeholder="Enter description here..."
+            placeholder="Enter the description of the executive order"
             :disabled="isLoading"
             rows="3"
             :class="{ 'border-red-500': errors.description }"
           />
           <p v-if="errors.description" class="text-sm text-red-500">{{ errors.description }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <Label for="citation">Other Keyword</Label>
+          <Input
+            id="citation"
+            v-model="formData.citation"
+            placeholder="Enter other keyword here..."
+            :disabled="isLoading"
+            :class="{ 'border-red-500': errors.citation }"
+          />
+          <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
         </div>
       </div>
       

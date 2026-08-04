@@ -376,7 +376,7 @@ defineExpose({
                   {{ item.description }}
                 </div>
                 <div class="text-xs text-muted-foreground mt-1">
-                  Citation: {{ item.citation || 'N/A' }} • Tenure: {{ item.tenure || 'N/A' }}
+                  Tenure: {{ item.tenure || 'N/A' }}
                 </div>
               </TableCell>
               <TableCell class="text-center">

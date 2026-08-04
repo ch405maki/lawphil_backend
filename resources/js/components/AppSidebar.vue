@@ -39,6 +39,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'Statutes',
             href: '#',
             icon: Gavel,
+            isOpen: true,
             children: statutesChildren,
         });
     }
@@ -57,6 +58,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'Executive Issuances',
             href: '#',
             icon: FileText,
+            isOpen: true,
             children: issuancesChildren,
         });
     }
@@ -86,6 +88,7 @@ const reportItems = ref([
         title: 'Reports',
         href: '#',
         icon: BarChart3,
+        isOpen: true,
         children: [
             { title: 'Case Stats', href: '#' },
             { title: 'Activity Logs', href: '/logs' },
