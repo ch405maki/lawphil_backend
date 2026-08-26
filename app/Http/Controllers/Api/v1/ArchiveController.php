@@ -34,7 +34,6 @@ class ArchiveController extends Controller
         $rows = DB::table($table)
             ->selectRaw('YEAR(date) as year, MONTH(date) as month')
             ->whereNotNull('date')
-            ->where('date', '!=', '')
             ->distinct()
             ->orderBy('year', 'desc')
             ->orderBy('month', 'asc')
