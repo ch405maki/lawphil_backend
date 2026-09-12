@@ -17,9 +17,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Icons
-import { Loader2 } from 'lucide-vue-next';
+import { Copy, Loader2 } from 'lucide-vue-next';
 
 const toast = useToast();
 
@@ -64,6 +74,8 @@ const emit = defineEmits<{
 }>();
 
 const processing = ref(false);
+const duplicating = ref(false);
+const duplicateOpen = ref(false);
 const errors = ref<ValidationErrors>({});
 const perCuriam = ref(false);
 
@@ -164,6 +176,55 @@ const closeDialog = () => {
   if (!processing.value) {
     emit('update:open', false);
     errors.value = {};
+  }
+};
+
+const duplicateAsNew = async () => {
+  errors.value = {};
+  duplicating.value = true;
+
+  try {
+    const response = await axios.post(
+      '/api/jurisprudence',
+      {
+        gr_number: formData.value.gr_number,
+        date: formData.value.date,
+        citation: formData.value.citation,
+        ponente: formData.value.ponente,
+        reference: formData.value.reference,
+        url: formData.value.url,
+        pdf_availability: formData.value.pdf_availability,
+        subject: formData.value.subject,
+        pdf_path: formData.value.pdf_path,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      }
+    );
+
+    if (response.data.success) {
+      toast.success('Case duplicated as a new record!');
+      duplicateOpen.value = false;
+      emit('update:open', false);
+      emit('saved');
+    } else {
+      throw new Error(response.data.message || 'Failed to duplicate case');
+    }
+  } catch (error: any) {
+    console.error('Error duplicating case:', error);
+
+    if (error.response?.data?.errors) {
+      errors.value = error.response.data.errors;
+      toast.error('Please check the form for errors');
+    } else {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to duplicate case';
+      toast.error(errorMessage);
+    }
+  } finally {
+    duplicating.value = false;
   }
 };
 </script>
@@ -294,14 +355,36 @@ const closeDialog = () => {
       </div>
 
       <DialogFooter>
-        <Button variant="outline" @click="closeDialog" :disabled="processing">
+        <Button variant="outline" @click="closeDialog" :disabled="processing || duplicating">
           Cancel
         </Button>
-        <Button @click="updateCase" :disabled="processing">
+        <Button variant="outline" @click="duplicateOpen = true" :disabled="processing || duplicating" class="gap-2">
+          <Copy class="h-4 w-4" />
+          Duplicate
+        </Button>
+        <Button @click="updateCase" :disabled="processing || duplicating">
           <Loader2 v-if="processing" class="h-4 w-4 mr-2 animate-spin" />
           {{ processing ? 'Updating...' : 'Save Changes' }}
         </Button>
       </DialogFooter>
     </DialogContent>
+
+    <AlertDialog :open="duplicateOpen" @update:open="duplicateOpen = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Duplicate as new record?</AlertDialogTitle>
+          <AlertDialogDescription>
+            A new record will be created with the current details. Your edits will not be applied to the original record.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel :disabled="duplicating">Cancel</AlertDialogCancel>
+          <AlertDialogAction @click.prevent="duplicateAsNew" :disabled="duplicating">
+            <Loader2 v-if="duplicating" class="h-4 w-4 mr-2 animate-spin" />
+            {{ duplicating ? 'Duplicating...' : 'Duplicate' }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </Dialog>
 </template>

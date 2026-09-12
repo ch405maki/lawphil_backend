@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -50,8 +50,24 @@ const loading = ref(true);
 const pagination = ref({
   current_page: 1,
   last_page: 1,
-  per_page: 15,
+  per_page: 10,
   total: 0
+});
+
+// Logic for generating numbered pagination
+const pageNumbers = computed<(number | string)[]>(() => {
+  const total = pagination.value.last_page;
+  const current = pagination.value.current_page;
+  const delta = 2;
+  const range: number[] = [];
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i);
+  }
+  if (current - delta > 2) range.unshift('...');
+  range.unshift(1);
+  if (current + delta < total - 1) range.push('...');
+  if (total > 1) range.push(total);
+  return range;
 });
 
 const getEventColor = (event: string) => {
@@ -77,7 +93,10 @@ const fetchActivityLogs = async (page = 1) => {
   loading.value = true;
   try {
     const response = await axios.get('/api/activity-logs', {
-      params: { page }
+      params: {
+        page,
+        rows: pagination.value.per_page
+      }
     });
     
     logs.value = response.data.data;
@@ -94,7 +113,8 @@ const fetchActivityLogs = async (page = 1) => {
   }
 };
 
-const changePage = (page: number) => {
+const changePage = (page: number | string) => {
+  if (typeof page !== 'number' || loading.value) return;
   if (page >= 1 && page <= pagination.value.last_page) {
     fetchActivityLogs(page);
   }
@@ -187,27 +207,30 @@ onMounted(() => {
             variant="outline"
             size="sm"
             @click="changePage(pagination.current_page - 1)"
-            :disabled="pagination.current_page === 1"
+            :disabled="pagination.current_page === 1 || loading"
           >
             Previous
           </Button>
           <div class="flex items-center gap-1">
-            <Button
-              v-for="page in pagination.last_page"
-              :key="page"
-              variant="outline"
-              size="sm"
-              @click="changePage(page)"
-              :class="{ 'bg-primary text-primary-foreground': pagination.current_page === page }"
-            >
-              {{ page }}
-            </Button>
+            <template v-for="(page, index) in pageNumbers" :key="index">
+              <Button
+                v-if="page !== '...'"
+                variant="outline"
+                size="sm"
+                @click="changePage(page)"
+                :disabled="loading"
+                :class="{ 'bg-primary text-primary-foreground': pagination.current_page === page }"
+              >
+                {{ page }}
+              </Button>
+              <span v-else class="px-2 text-muted-foreground">...</span>
+            </template>
           </div>
           <Button
             variant="outline"
             size="sm"
             @click="changePage(pagination.current_page + 1)"
-            :disabled="pagination.current_page === pagination.last_page"
+            :disabled="pagination.current_page === pagination.last_page || loading"
           >
             Next
           </Button>
