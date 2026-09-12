@@ -33,6 +33,7 @@ class JurisprudenceController extends Controller
 
             $this->applySearch($query, $request->input('search'));
             $this->applyYearFilter($query, $request->input('year'));
+            $this->applyMonthFilter($query, $request->input('month'));
             $this->applySort($query, $request->input('sort'));
 
             $rows = min((int) $request->input('rows', 10), 100);
