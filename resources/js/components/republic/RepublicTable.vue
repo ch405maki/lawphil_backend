@@ -332,10 +332,10 @@ defineExpose({
           <TableHeader>
             <TableRow>
               <TableHead class="w-[15%]">R.A. & Date</TableHead>
-              <TableHead class="w-[40%]">Description</TableHead>
-              <TableHead class="w-[15%] text-center">URL</TableHead>
-              <TableHead class="w-[10%] text-center">PDF</TableHead>
-              <TableHead class="w-[20%] text-right">Actions</TableHead>
+              <TableHead class="w-[60%]">Description</TableHead>
+              <TableHead class="w-[9%] text-right">URL</TableHead>
+              <TableHead class="w-[6%] text-right">PDF</TableHead>
+              <TableHead class="w-[10%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -353,11 +353,11 @@ defineExpose({
                     <Skeleton class="h-3 w-48" />
                   </div>
                 </TableCell>
-                <TableCell class="text-center">
-                  <Skeleton class="h-5 w-12 mx-auto" />
+                <TableCell class="text-right">
+                  <Skeleton class="h-5 w-12 ml-auto" />
                 </TableCell>
-                <TableCell class="text-center">
-                  <Skeleton class="h-8 w-8 rounded-full mx-auto" />
+                <TableCell class="text-right">
+                  <Skeleton class="h-8 w-8 rounded-full ml-auto" />
                 </TableCell>
                 <TableCell class="text-right">
                   <div class="flex justify-end gap-2">
@@ -378,7 +378,7 @@ defineExpose({
                   {{ item.description }}
                 </div>
               </TableCell>
-              <TableCell class="text-center">
+              <TableCell class="text-right">
                 <a 
                   v-if="item.url" 
                   :href="generateHtmlUrl(item.url)" 
@@ -389,7 +389,7 @@ defineExpose({
                 </a>
                 <span v-else class="text-muted-foreground">—</span>
               </TableCell>
-              <TableCell class="text-center">
+              <TableCell class="text-right">
                 <a 
                   v-if="item.pdf_availability && (item.pdf_path || item.url)"
                   :href="generatePdfUrl(item.pdf_path, item.url)"
