@@ -19,7 +19,6 @@ const formData = reactive({
   ra_number: '',
   date: '',
   citation: '',
-  tenure: '',
   url: '',
   pdf_availability: false,
   description: '',
@@ -31,7 +30,6 @@ const errors = reactive({
   ra_number: '',
   date: '',
   citation: '',
-  tenure: '',
   url: '',
   description: '',
   pdf_path: ''
@@ -68,7 +66,6 @@ const clearForm = () => {
   formData.ra_number = '';
   formData.date = '';
   formData.citation = '';
-  formData.tenure = '';
   formData.url = '';
   formData.pdf_availability = false;
   formData.description = '';
@@ -166,7 +163,7 @@ const resetForm = () => {
         </div>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4">
         <div>
             <Label for="url">URL</Label>
             <Input
@@ -178,17 +175,6 @@ const resetForm = () => {
                 :class="{ 'border-red-500': errors.url }"
             />
             <p v-if="errors.url" class="text-sm text-red-500">{{ errors.url }}</p>
-        </div>
-        <div>
-          <Label for="tenure">Tenure</Label>
-          <Input
-            id="tenure"
-            v-model="formData.tenure"
-            placeholder="e.g., Justice Dela Cruz"
-            :disabled="isLoading"
-            :class="{ 'border-red-500': errors.tenure }"
-          />
-          <p v-if="errors.tenure" class="text-sm text-red-500">{{ errors.tenure }}</p>
         </div>
       </div>
         

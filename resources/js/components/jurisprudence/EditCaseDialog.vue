@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -78,6 +79,8 @@ const duplicating = ref(false);
 const duplicateOpen = ref(false);
 const errors = ref<ValidationErrors>({});
 const perCuriam = ref(false);
+const editingId = ref<number | null>(null);
+const isDuplicateEdit = ref(false);
 
 watch(perCuriam, (val) => {
   if (val) {
@@ -121,6 +124,8 @@ watch(() => props.caseData, (newData) => {
       pdf_path: newData.pdf_path || '',
     };
     perCuriam.value = newData.ponente === 'Per Curiam';
+    editingId.value = newData.id;
+    isDuplicateEdit.value = false;
   }
 }, { immediate: true });
 
@@ -130,7 +135,7 @@ const updateCase = async () => {
 
   try {
     const response = await axios.post(
-      `/api/jurisprudence/${props.caseData.id}`,
+      `/api/jurisprudence/${editingId.value ?? props.caseData.id}`,
       {
         gr_number: formData.value.gr_number,
         date: formData.value.date,
@@ -206,9 +211,23 @@ const duplicateAsNew = async () => {
     );
 
     if (response.data.success) {
-      toast.success('Case duplicated as a new record!');
+      const created = response.data.data;
+      toast.success('Case duplicated — now editing the new record!');
       duplicateOpen.value = false;
-      emit('update:open', false);
+      formData.value = {
+        gr_number: created.gr_number || '',
+        date: created.date ? new Date(created.date).toISOString().split('T')[0] : '',
+        citation: created.citation || '',
+        ponente: created.ponente || '',
+        reference: created.reference || '',
+        url: created.url || '',
+        pdf_availability: created.pdf_availability || false,
+        subject: created.subject || '',
+        pdf_path: created.pdf_path || '',
+      };
+      perCuriam.value = created.ponente === 'Per Curiam';
+      editingId.value = created.id ?? null;
+      isDuplicateEdit.value = true;
       emit('saved');
     } else {
       throw new Error(response.data.message || 'Failed to duplicate case');
@@ -233,9 +252,23 @@ const duplicateAsNew = async () => {
   <Dialog :open="open" @update:open="closeDialog">
     <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Edit Case Information</DialogTitle>
+        <div class="flex items-start justify-between gap-2 pr-6">
+          <DialogTitle>
+            {{ isDuplicateEdit ? 'Editing Duplicated Record' : 'Edit Case Information' }}
+          </DialogTitle>
+          <Badge v-if="isDuplicateEdit" variant="outline" class="shrink-0 border-primary/50 text-primary">
+            Duplicate
+          </Badge>
+        </div>
         <DialogDescription>
-          Update the case details below.
+          <template v-if="isDuplicateEdit">
+            You are editing the newly created duplicate
+            <span v-if="formData.gr_number" class="font-medium text-foreground">(G.R. No. {{ formData.gr_number }})</span>.
+            Saving changes updates this new record — the original is left untouched.
+          </template>
+          <template v-else>
+            Update the case details below.
+          </template>
         </DialogDescription>
       </DialogHeader>
       
@@ -358,7 +391,7 @@ const duplicateAsNew = async () => {
         <Button variant="outline" @click="closeDialog" :disabled="processing || duplicating">
           Cancel
         </Button>
-        <Button variant="outline" @click="duplicateOpen = true" :disabled="processing || duplicating" class="gap-2">
+        <Button variant="outline" @click="duplicateOpen = true" :disabled="processing || duplicating || isDuplicateEdit" class="gap-2">
           <Copy class="h-4 w-4" />
           Duplicate
         </Button>

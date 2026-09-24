@@ -22,6 +22,11 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '127.0.0.1',
+        port: 5650,
+        strictPort: false,
+    },
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './resources/js'),
