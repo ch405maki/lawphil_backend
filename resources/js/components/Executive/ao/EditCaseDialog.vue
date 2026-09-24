@@ -11,8 +11,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+
 // Icons
-import { Loader2 } from 'lucide-vue-next';
+import { Copy, Loader2 } from 'lucide-vue-next';
 
 const toast = useToast();
 
@@ -51,6 +63,10 @@ const emit = defineEmits<{
 
 const processing = ref(false);
 const errors = ref<ValidationErrors>({});
+const duplicating = ref(false);
+const duplicateOpen = ref(false);
+const editingId = ref<number | null>(null);
+const isDuplicateEdit = ref(false);
 
 const formData = ref({
     ao_number: '',
@@ -78,6 +94,8 @@ watch(
                 description: newData.description || '',
                 pdf_path: newData.pdf_path || '',
             };
+            editingId.value = newData.id;
+            isDuplicateEdit.value = false;
         }
     },
     { immediate: true },
@@ -93,7 +111,7 @@ const updateCase = async () => {
 
     try {
         const response = await axios.post(
-            `/api/v1/ao/${props.aoData.id}`,
+            `/api/v1/ao/${editingId.value ?? props.aoData.id}`,
             {
                 ao_number: formData.value.ao_number,
                 date: formData.value.date,
@@ -140,14 +158,86 @@ const closeDialog = () => {
         errors.value = {};
     }
 };
+
+const duplicateAsNew = async () => {
+    errors.value = {};
+    duplicating.value = true;
+
+    try {
+        const response = await axios.post(
+            '/api/v1/ao',
+            {
+                ao_number: formData.value.ao_number,
+                date: formData.value.date,
+                citation: formData.value.citation,
+                tenure: formData.value.tenure,
+                url: formData.value.url,
+                pdf_availability: formData.value.pdf_availability,
+                description: formData.value.description,
+                pdf_path: formData.value.pdf_path,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                },
+            },
+        );
+
+        if (response.data.success) {
+            const created = response.data.data;
+            toast.success('Record duplicated — now editing the new record!');
+            duplicateOpen.value = false;
+            formData.value = {
+                ao_number: created.ao_number || '',
+                date: created.date ? new Date(created.date).toISOString().split('T')[0] : '',
+                citation: created.citation || '',
+                tenure: created.tenure || '',
+                url: created.url || '',
+                pdf_availability: created.pdf_availability || false,
+                description: created.description || '',
+                pdf_path: created.pdf_path || '',
+            };
+            editingId.value = created.id ?? null;
+            isDuplicateEdit.value = true;
+            emit('saved');
+        } else {
+            throw new Error(response.data.message || 'Failed to duplicate record');
+        }
+    } catch (error: any) {
+        console.error('Error duplicating record:', error);
+
+        if (error.response?.data?.errors) {
+            errors.value = error.response.data.errors;
+            toast.error('Please check the form for errors');
+        } else {
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to duplicate record';
+            toast.error(errorMessage);
+        }
+    } finally {
+        duplicating.value = false;
+    }
+};
 </script>
 
 <template>
     <Dialog :open="open" @update:open="closeDialog">
         <DialogContent class="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
-                <DialogTitle>Edit Administrative Order Information</DialogTitle>
-                <DialogDescription> Update the administrative order details below. </DialogDescription>
+                <div class="flex items-start justify-between gap-2 pr-6">
+                    <DialogTitle>
+                        {{ isDuplicateEdit ? 'Editing Duplicated Record' : 'Edit Administrative Order Information' }}
+                    </DialogTitle>
+                    <Badge v-if="isDuplicateEdit" variant="outline" class="shrink-0 border-primary/50 text-primary"> Duplicate </Badge>
+                </div>
+                <DialogDescription>
+                    <template v-if="isDuplicateEdit">
+                        You are editing the newly created duplicate
+                        <span v-if="formData.ao_number" class="font-medium text-foreground">(A.O. No. {{ formData.ao_number }})</span>. Saving changes
+                        updates this new record — the original is left untouched.
+                    </template>
+                    <template v-else> Update the administrative order details below. </template>
+                </DialogDescription>
             </DialogHeader>
 
             <div class="space-y-4 py-4">
@@ -227,12 +317,33 @@ const closeDialog = () => {
             </div>
 
             <DialogFooter>
-                <Button variant="outline" @click="closeDialog" :disabled="processing"> Cancel </Button>
-                <Button @click="updateCase" :disabled="processing">
+                <Button variant="outline" @click="closeDialog" :disabled="processing || duplicating"> Cancel </Button>
+                <Button variant="outline" @click="duplicateOpen = true" :disabled="processing || duplicating || isDuplicateEdit" class="gap-2">
+                    <Copy class="h-4 w-4" />
+                    Duplicate
+                </Button>
+                <Button @click="updateCase" :disabled="processing || duplicating">
                     <Loader2 v-if="processing" class="mr-2 h-4 w-4 animate-spin" />
                     {{ processing ? 'Updating...' : 'Save Changes' }}
                 </Button>
             </DialogFooter>
         </DialogContent>
+        <AlertDialog :open="duplicateOpen" @update:open="duplicateOpen = $event">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Duplicate as new record?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        A new record will be created with the current details. Your edits will not be applied to the original record.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel :disabled="duplicating">Cancel</AlertDialogCancel>
+                    <AlertDialogAction @click.prevent="duplicateAsNew" :disabled="duplicating">
+                        <Loader2 v-if="duplicating" class="mr-2 h-4 w-4 animate-spin" />
+                        {{ duplicating ? 'Duplicating...' : 'Duplicate' }}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </Dialog>
 </template>
