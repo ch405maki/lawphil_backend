@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, nextTick } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import { 
@@ -65,12 +65,33 @@ const autoFillSCRA = () => {
   }
 };
 
+// Auto-format citation: uppercase all words, keep "vs."/"vs" lowercase
+// Only touches words — whitespace is left as typed so spaces remain typeable.
+const formatCitation = (value: string): string => {
+  return value.replace(
+    /(^|\s)([^\s]+)/g,
+    (_match, ws: string, word: string) => ws + (/^vs\.?$/i.test(word) ? word.toLowerCase() : word.toUpperCase())
+  );
+};
+
+const onCitationInput = (event: Event) => {
+  const el = event.target as HTMLTextAreaElement;
+  const caret = el.selectionStart;
+  const formatted = formatCitation(el.value);
+  if (formatted !== formData.citation) {
+    formData.citation = formatted;
+    nextTick(() => {
+      el.setSelectionRange(caret, caret);
+    });
+  }
+};
+
 // Auto-fill from duplicate selection
 watch(() => props.duplicateData, (val) => {
   if (!val) return;
   formData.gr_number = val.gr_number ?? '';
   formData.date = val.date ? new Date(val.date).toISOString().split('T')[0] : '';
-  formData.citation = val.citation ?? '';
+  formData.citation = formatCitation(val.citation ?? '');
   formData.ponente = val.ponente ?? '';
   formData.reference = val.reference ?? '';
   formData.url = val.url ?? '';
@@ -266,6 +287,7 @@ const resetForm = () => {
           placeholder="e.g., 123 SCRA 456"
           :disabled="isLoading"
           :class="{ 'border-red-500': errors.citation }"
+          @input="onCitationInput"
         />
         <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
       </div>
@@ -273,11 +295,11 @@ const resetForm = () => {
     
     <!-- Subject -->
     <div>
-      <Label for="subject">Subject</Label>
+      <Label for="subject">Other hint/s</Label>
       <Textarea
         id="subject"
         v-model="formData.subject"
-        placeholder="Enter the subject or topic of the case"
+        placeholder="Enter other hint/s of the case"
         :disabled="isLoading"
         rows="3"
         :class="{ 'border-red-500': errors.subject }"

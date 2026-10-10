@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import axios, { AxiosError } from 'axios';
+import { ref, watch, nextTick } from 'vue';
+import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
 // Shadcn UI Components
@@ -59,11 +59,6 @@ interface ValidationErrors {
   pdf_path?: string[];
 }
 
-interface ErrorResponse {
-  message?: string;
-  errors?: ValidationErrors;
-}
-
 const props = defineProps<{
   open: boolean;
   caseData: CaseData;
@@ -109,13 +104,34 @@ const autoFillSCRA = () => {
   }
 };
 
+// Auto-format citation: uppercase all words, keep "vs."/"vs" lowercase
+// Only touches words — whitespace is left as typed so spaces remain typeable.
+const formatCitation = (value: string): string => {
+  return value.replace(
+    /(^|\s)([^\s]+)/g,
+    (_match, ws: string, word: string) => ws + (/^vs\.?$/i.test(word) ? word.toLowerCase() : word.toUpperCase())
+  );
+};
+
+const onCitationInput = (event: Event) => {
+  const el = event.target as HTMLTextAreaElement;
+  const caret = el.selectionStart;
+  const formatted = formatCitation(el.value);
+  if (formatted !== formData.value.citation) {
+    formData.value.citation = formatted;
+    nextTick(() => {
+      el.setSelectionRange(caret, caret);
+    });
+  }
+};
+
 // Watch for caseData changes to populate form
 watch(() => props.caseData, (newData) => {
   if (newData && newData.id) {
     formData.value = {
       gr_number: newData.gr_number || '',
       date: newData.date ? new Date(newData.date).toISOString().split('T')[0] : '',
-      citation: newData.citation || '',
+      citation: formatCitation(newData.citation || ''),
       ponente: newData.ponente || '',
       reference: newData.reference || '',
       url: newData.url || '',
@@ -217,7 +233,7 @@ const duplicateAsNew = async () => {
       formData.value = {
         gr_number: created.gr_number || '',
         date: created.date ? new Date(created.date).toISOString().split('T')[0] : '',
-        citation: created.citation || '',
+        citation: formatCitation(created.citation || ''),
         ponente: created.ponente || '',
         reference: created.reference || '',
         url: created.url || '',
@@ -305,6 +321,7 @@ const duplicateAsNew = async () => {
             :class="{'border-destructive': errors.citation}" 
             rows="3"
             :disabled="processing"
+            @input="onCitationInput"
           />
           <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
         </div>
