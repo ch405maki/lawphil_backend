@@ -26,12 +26,23 @@ class JurisprudenceController extends Controller
         'subject',
     ];
 
+    /**
+     * Keyword-scope allow-list (`fields` query param) sent by the search page's
+     * "Search in: Year / Citation / Reference" checkboxes. Keys are the values the
+     * front-end sends; values are the columns the keyword may match.
+     */
+    private const SEARCH_SCOPES = [
+        'date'      => 'date',
+        'citation'  => 'citation',
+        'reference' => 'reference',
+    ];
+
     public function index(Request $request)
     {
         try {
             $query = Jurisprudence::query();
 
-            $this->applySearch($query, $request->input('search'));
+            $this->applySearch($query, $request->input('search'), $request->input('fields'));
             $this->applyYearFilter($query, $request->input('year'));
             $this->applyMonthFilter($query, $request->input('month'));
             $this->applySort($query, $request->input('sort'));
@@ -178,12 +189,17 @@ class JurisprudenceController extends Controller
      * 
      * e.g. "republic philippines" → two AND-wrapped OR groups, so a row must
      * contain BOTH "republic" and "philippines" somewhere across the columns.
+     *
+     * `$fields` (the front-end scope checkboxes) narrows which columns a token may
+     * match — see searchColumns().
      */
-    private function applySearch($query, ?string $search): void
+    private function applySearch($query, ?string $search, mixed $fields = null): void
     {
         if (blank($search)) {
             return;
         }
+
+        $columns = $this->searchColumns($fields);
 
         // Normalize whitespace and split into unique, non-empty tokens
         $keywords = collect(preg_split('/\s+/', trim($search)))
@@ -192,12 +208,35 @@ class JurisprudenceController extends Controller
             ->values();
 
         foreach ($keywords as $keyword) {
-            $query->where(function ($q) use ($keyword) {
-                foreach (self::SEARCHABLE_COLUMNS as $column) {
+            $query->where(function ($q) use ($keyword, $columns) {
+                foreach ($columns as $column) {
                     $q->orWhere($column, 'LIKE', "%{$keyword}%");
                 }
             });
         }
+    }
+
+    /**
+     * Resolve the `fields` param into the columns a keyword may match:
+     * `fields=citation,reference` → ['citation', 'reference'].
+     *
+     * Values are allow-listed through SEARCH_SCOPES. When none of the requested
+     * values are recognised — or the param is absent — every searchable column is
+     * used, which keeps the previous all-fields behaviour.
+     */
+    private function searchColumns(mixed $fields): array
+    {
+        $requested = is_array($fields) ? $fields : explode(',', (string) $fields);
+
+        $scoped = collect($requested)
+            ->map(fn ($field) => strtolower(trim((string) $field)))
+            ->filter(fn ($field) => isset(self::SEARCH_SCOPES[$field]))
+            ->map(fn ($field) => self::SEARCH_SCOPES[$field])
+            ->unique()
+            ->values()
+            ->all();
+
+        return $scoped ?: self::SEARCHABLE_COLUMNS;
     }
 
     /**
