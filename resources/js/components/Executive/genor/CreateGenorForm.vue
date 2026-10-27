@@ -18,7 +18,9 @@ const toast = useToast();
 const formData = reactive({
   genor_number: '',
   date: '',
+  tenure: '',
   citation: '',
+  subject: '',
   description: '',
   url: '',
   pdf_availability: false,
@@ -29,7 +31,9 @@ const formData = reactive({
 const errors = reactive({
   genor_number: '',
   date: '',
+  tenure: '',
   citation: '',
+  subject: '',
   description: '',
   url: '',
   pdf_path: ''
@@ -65,7 +69,9 @@ const validateForm = () => {
 const clearForm = () => {
   formData.genor_number = '';
   formData.date = '';
+  formData.tenure = '';
   formData.citation = '';
+  formData.subject = '';
   formData.description = '';
   formData.url = '';
   formData.pdf_availability = false;
@@ -163,8 +169,8 @@ const resetForm = () => {
         </div>
       </div>
       
-      <div class="grid grid-cols-1 gap-4">
-        <div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
             <Label for="url">URL</Label>
             <Input
                 id="url"
@@ -175,6 +181,19 @@ const resetForm = () => {
                 :class="{ 'border-red-500': errors.url }"
             />
             <p v-if="errors.url" class="text-sm text-red-500">{{ errors.url }}</p>
+        </div>
+
+        <div>
+          <Label for="tenure">Tenure</Label>
+          <Input
+            id="tenure"
+            v-model="formData.tenure"
+            type="text"
+            placeholder="e.g., 2016-2022"
+            :disabled="isLoading"
+            :class="{ 'border-red-500': errors.tenure }"
+          />
+          <p v-if="errors.tenure" class="text-sm text-red-500">{{ errors.tenure }}</p>
         </div>
       </div>
         
@@ -195,11 +214,11 @@ const resetForm = () => {
 
       <div class="grid grid-cols-1 gap-4">
         <div>
-          <Label for="citation">Other Keyword</Label>
+          <Label for="citation">Citation</Label>
           <Textarea
             id="citation"
             v-model="formData.citation"
-            placeholder="Enter other keyword here..."
+            placeholder="Enter citation here..."
             :disabled="isLoading"
             rows="2"
             :class="{ 'border-red-500': errors.citation }"
@@ -208,6 +227,21 @@ const resetForm = () => {
         </div>
       </div>
       
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <Label for="subject">Other hint/s</Label>
+          <Textarea
+            id="subject"
+            v-model="formData.subject"
+            placeholder="Enter other hint/s here..."
+            :disabled="isLoading"
+            rows="3"
+            :class="{ 'border-red-500': errors.subject }"
+          />
+          <p v-if="errors.subject" class="text-sm text-red-500">{{ errors.subject }}</p>
+        </div>
+      </div>
+
       <div class="space-y-2">
           <div class="flex items-start gap-4">
               <div class="flex items-center space-x-2 pt-2">

@@ -364,13 +364,13 @@ const duplicateAsNew = async () => {
 
         <!-- Subject Field -->
         <div class="space-y-2">
-          <Label for="subject">Subject</Label>
+          <Label for="subject">Other hint/s</Label>
           <Textarea 
             id="subject" 
             v-model="formData.subject" 
             :class="{'border-destructive': errors.subject}" 
             rows="2"
-            placeholder="Enter the subject or topic of the case"
+            placeholder="Enter the other hint/s or topic of the case"
             :disabled="processing"
           />
           <p v-if="errors.subject" class="text-xs text-destructive">{{ errors.subject[0] }}</p>

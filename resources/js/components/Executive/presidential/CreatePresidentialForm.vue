@@ -18,9 +18,9 @@ const toast = useToast();
 const formData = reactive({
   pd_number: '',
   date: '',
+  tenure: '',
   citation: '',
   subject: '',
-  reference: '',
   url: '',
   pdf_availability: false,
   pdf_path: ''
@@ -30,9 +30,9 @@ const formData = reactive({
 const errors = reactive({
   pd_number: '',
   date: '',
+  tenure: '',
   citation: '',
   subject: '',
-  reference: '',
   url: '',
   pdf_path: ''
 });
@@ -67,9 +67,9 @@ const validateForm = () => {
 const clearForm = () => {
   formData.pd_number = '';
   formData.date = '';
+  formData.tenure = '';
   formData.citation = '';
   formData.subject = '';
-  formData.reference = '';
   formData.url = '';
   formData.pdf_availability = false;
   formData.pdf_path = '';
@@ -136,7 +136,7 @@ const resetForm = () => {
 <template>
   <div>
     <form @submit.prevent="submitForm" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label for="pd_number">
             P.D. Number <span class="text-red-500">*</span>
@@ -164,22 +164,10 @@ const resetForm = () => {
           />
           <p v-if="errors.date" class="text-sm text-red-500">{{ errors.date }}</p>
         </div>
-
-        <div>
-          <Label for="reference">Reference</Label>
-          <Input
-            id="reference"
-            v-model="formData.reference"
-            placeholder="e.g., Volume 123, Page 456"
-            :disabled="isLoading"
-            :class="{ 'border-red-500': errors.reference }"
-          />
-          <p v-if="errors.reference" class="text-sm text-red-500">{{ errors.reference }}</p>
-        </div>
       </div>
       
-      <div class="grid grid-cols-1 gap-4">
-        <div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
             <Label for="url">URL</Label>
             <Input
                 id="url"
@@ -190,6 +178,19 @@ const resetForm = () => {
                 :class="{ 'border-red-500': errors.url }"
             />
             <p v-if="errors.url" class="text-sm text-red-500">{{ errors.url }}</p>
+        </div>
+
+        <div>
+          <Label for="tenure">Tenure</Label>
+          <Input
+            id="tenure"
+            v-model="formData.tenure"
+            type="text"
+            placeholder="e.g., 2016-2022"
+            :disabled="isLoading"
+            :class="{ 'border-red-500': errors.tenure }"
+          />
+          <p v-if="errors.tenure" class="text-sm text-red-500">{{ errors.tenure }}</p>
         </div>
       </div>
         
@@ -208,6 +209,21 @@ const resetForm = () => {
         </div>
       </div>
       
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <Label for="subject">Other hint/s</Label>
+          <Textarea
+            id="subject"
+            v-model="formData.subject"
+            placeholder="Enter other hint/s here..."
+            :disabled="isLoading"
+            rows="3"
+            :class="{ 'border-red-500': errors.subject }"
+          />
+          <p v-if="errors.subject" class="text-sm text-red-500">{{ errors.subject }}</p>
+        </div>
+      </div>
+
       <div class="space-y-2">
           <div class="flex items-start gap-4">
               <div class="flex items-center space-x-2 pt-2">

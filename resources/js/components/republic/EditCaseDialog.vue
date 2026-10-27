@@ -296,7 +296,7 @@ const duplicateAsNew = async () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="citation">Other Keyword</Label>
+                    <Label for="citation">Other hint/s</Label>
                     <Textarea
                         id="citation"
                         v-model="formData.citation"

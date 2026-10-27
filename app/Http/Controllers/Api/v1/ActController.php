@@ -198,11 +198,13 @@ class ActController extends Controller
 
     private function applySort($query, ?string $sort): void
     {
+        $sort = $sort === 'latest' ? 'newest' : $sort;
+
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
 
         $query->orderBy($column, $direction);
 
-        if (in_array($sort, ['oldest', 'newest'])) {
+        if (in_array($sort ?? 'newest', ['oldest', 'newest'], true)) {
             $query->orderByRaw('CAST(SUBSTRING_INDEX(' . self::NUMBER_COLUMN . ', "No. ", -1) AS UNSIGNED) ' . $direction);
         }
     }

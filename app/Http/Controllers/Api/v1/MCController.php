@@ -55,6 +55,7 @@ class MCController extends Controller
                 'date' => 'required|date',
                 'citation' => 'nullable|string',
                 'tenure' => 'nullable|string',
+                'subject' => 'nullable|string',
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
                 'description' => 'nullable|string',
@@ -75,6 +76,7 @@ class MCController extends Controller
                 'date' => $request->date,
                 'citation' => $request->citation,
                 'tenure' => $request->tenure,
+                'subject' => $request->subject,
                 'url' => $request->url,
                 'pdf_availability' => $request->pdf_availability ?? false,
                 'description' => $request->description,
@@ -105,6 +107,7 @@ class MCController extends Controller
                 'date' => 'sometimes|required|date',
                 'citation' => 'nullable|string',
                 'tenure' => 'nullable|string',
+                'subject' => 'nullable|string',
                 'description' => 'nullable|string',
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
@@ -124,6 +127,7 @@ class MCController extends Controller
                 'date', 
                 'citation', 
                 'tenure', 
+                'subject', 
                 'description', 
                 'url',
                 'pdf_availability',
@@ -200,11 +204,13 @@ class MCController extends Controller
 
     private function applySort($query, ?string $sort): void
     {
+        $sort = $sort === 'latest' ? 'newest' : $sort;
+
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
 
         $query->orderBy($column, $direction);
 
-        if (in_array($sort, ['oldest', 'newest'])) {
+        if (in_array($sort ?? 'newest', ['oldest', 'newest'], true)) {
             $query->orderByRaw('CAST(SUBSTRING_INDEX(' . self::NUMBER_COLUMN . ', "No. ", -1) AS UNSIGNED) ' . $direction);
         }
     }

@@ -14,6 +14,7 @@ class AO extends Model
         'date', 
         'citation',
         'tenure', 
+        'subject',
         'url', 
         'pdf_availability',
         'description',
