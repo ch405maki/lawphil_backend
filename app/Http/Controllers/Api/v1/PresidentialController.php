@@ -60,7 +60,6 @@ class PresidentialController extends Controller
                 'reference' => 'nullable|string',
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
-                'subject' => 'nullable|string',
                 'tenure' => 'nullable|string',
                 'pdf_path' => 'nullable|string',
             ]);
@@ -82,7 +81,6 @@ class PresidentialController extends Controller
                 'reference' => $request->reference,
                 'url' => $request->url,
                 'pdf_availability' => $request->pdf_availability ?? false,
-                'subject' => $request->subject,
                 'tenure' => $request->tenure,
                 'pdf_path' => $request->pdf_path,
             ]);
