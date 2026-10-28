@@ -200,7 +200,7 @@ const resetForm = () => {
           <Textarea
             id="citation"
             v-model="formData.citation"
-            placeholder="Enter description here..."
+            placeholder="Enter the description of the presidential decree"
             :disabled="isLoading"
             rows="3"
             :class="{ 'border-red-500': errors.citation }"
@@ -208,7 +208,7 @@ const resetForm = () => {
           <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
         </div>
       </div>
-      
+
       <div class="grid grid-cols-1 gap-4">
         <div>
           <Label for="subject">Other hint/s</Label>

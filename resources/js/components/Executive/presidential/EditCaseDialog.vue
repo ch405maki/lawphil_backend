@@ -279,18 +279,13 @@ const duplicateAsNew = async () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="reference">Reference</Label>
-                    <Input id="reference" v-model="formData.reference" :disabled="processing" />
+                    <Label for="url">URL</Label>
+                    <Input id="url" v-model="formData.url" placeholder="https://..." :disabled="processing" />
                 </div>
 
                 <div class="space-y-2">
                     <Label for="tenure">Tenure</Label>
-                    <Input id="tenure" v-model="formData.tenure" placeholder="e.g., Justice Dela Cruz" :disabled="processing" />
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="url">URL</Label>
-                    <Input id="url" v-model="formData.url" placeholder="https://..." :disabled="processing" />
+                    <Input id="tenure" v-model="formData.tenure" placeholder="e.g., 2016-2022" :disabled="processing" />
                 </div>
 
                 <div class="space-y-2">
@@ -300,7 +295,7 @@ const duplicateAsNew = async () => {
                         v-model="formData.subject"
                         :class="{ 'border-destructive': errors.subject }"
                         rows="2"
-                        placeholder="Enter the subject or topic of the case"
+                        placeholder="Enter other hint/s here..."
                         :disabled="processing"
                     />
                     <p v-if="errors.subject" class="text-xs text-destructive">{{ errors.subject[0] }}</p>
