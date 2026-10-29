@@ -20,7 +20,6 @@ const formData = reactive({
   date: '',
   tenure: '',
   citation: '',
-  subject: '',
   url: '',
   pdf_availability: false,
   pdf_path: ''
@@ -32,7 +31,6 @@ const errors = reactive({
   date: '',
   tenure: '',
   citation: '',
-  subject: '',
   url: '',
   pdf_path: ''
 });
@@ -69,7 +67,6 @@ const clearForm = () => {
   formData.date = '';
   formData.tenure = '';
   formData.citation = '';
-  formData.subject = '';
   formData.url = '';
   formData.pdf_availability = false;
   formData.pdf_path = '';
@@ -206,21 +203,6 @@ const resetForm = () => {
             :class="{ 'border-red-500': errors.citation }"
           />
           <p v-if="errors.citation" class="text-sm text-red-500">{{ errors.citation }}</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-4">
-        <div>
-          <Label for="subject">Other hint/s</Label>
-          <Textarea
-            id="subject"
-            v-model="formData.subject"
-            placeholder="Enter other hint/s here..."
-            :disabled="isLoading"
-            rows="3"
-            :class="{ 'border-red-500': errors.subject }"
-          />
-          <p v-if="errors.subject" class="text-sm text-red-500">{{ errors.subject }}</p>
         </div>
       </div>
 

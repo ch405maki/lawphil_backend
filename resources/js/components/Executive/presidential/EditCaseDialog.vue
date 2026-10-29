@@ -36,7 +36,6 @@ interface PresDecData {
     reference: string;
     url: string;
     pdf_availability?: boolean;
-    subject: string;
     tenure: string;
     pdf_path: string;
 }
@@ -48,7 +47,6 @@ interface ValidationErrors {
     reference?: string[];
     url?: string[];
     pdf_availability?: string[];
-    subject?: string[];
     tenure?: string[];
     pdf_path?: string[];
 }
@@ -77,7 +75,6 @@ const formData = ref({
     reference: '',
     url: '',
     pdf_availability: false,
-    subject: '',
     tenure: '',
     pdf_path: '',
 });
@@ -94,7 +91,6 @@ watch(
                 reference: newData.reference || '',
                 url: newData.url || '',
                 pdf_availability: newData.pdf_availability || false,
-                subject: newData.subject || '',
                 tenure: newData.tenure || '',
                 pdf_path: newData.pdf_path || '',
             };
@@ -123,7 +119,6 @@ const updateCase = async () => {
                 reference: formData.value.reference,
                 url: formData.value.url,
                 pdf_availability: formData.value.pdf_availability,
-                subject: formData.value.subject,
                 tenure: formData.value.tenure,
                 pdf_path: formData.value.pdf_path,
             },
@@ -178,7 +173,6 @@ const duplicateAsNew = async () => {
                 reference: formData.value.reference,
                 url: formData.value.url,
                 pdf_availability: formData.value.pdf_availability,
-                subject: formData.value.subject,
                 tenure: formData.value.tenure,
                 pdf_path: formData.value.pdf_path,
             },
@@ -201,7 +195,6 @@ const duplicateAsNew = async () => {
                 reference: created.reference || '',
                 url: created.url || '',
                 pdf_availability: created.pdf_availability || false,
-                subject: created.subject || '',
                 tenure: created.tenure || '',
                 pdf_path: created.pdf_path || '',
             };
@@ -271,6 +264,7 @@ const duplicateAsNew = async () => {
                     <Textarea
                         id="citation"
                         v-model="formData.citation"
+                        placeholder="Enter the description of the presidential decree"
                         :class="{ 'border-destructive': errors.citation }"
                         rows="3"
                         :disabled="processing"
@@ -278,27 +272,15 @@ const duplicateAsNew = async () => {
                     <p v-if="errors.citation" class="text-xs text-destructive">{{ errors.citation[0] }}</p>
                 </div>
 
-                <div class="space-y-2">
-                    <Label for="url">URL</Label>
-                    <Input id="url" v-model="formData.url" placeholder="https://..." :disabled="processing" />
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="tenure">Tenure</Label>
-                    <Input id="tenure" v-model="formData.tenure" placeholder="e.g., 2016-2022" :disabled="processing" />
-                </div>
-
-                <div class="space-y-2">
-                    <Label for="subject">Other hint/s</Label>
-                    <Textarea
-                        id="subject"
-                        v-model="formData.subject"
-                        :class="{ 'border-destructive': errors.subject }"
-                        rows="2"
-                        placeholder="Enter other hint/s here..."
-                        :disabled="processing"
-                    />
-                    <p v-if="errors.subject" class="text-xs text-destructive">{{ errors.subject[0] }}</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <Label for="tenure">Tenure</Label>
+                        <Input id="tenure" v-model="formData.tenure" placeholder="e.g., 2016-2022" :disabled="processing" />
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="url">URL</Label>
+                        <Input id="url" v-model="formData.url" placeholder="https://..." :disabled="processing" />
+                    </div>
                 </div>
 
                 <!-- PDF Availability Checkbox -->

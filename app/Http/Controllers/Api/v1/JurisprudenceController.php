@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\Storage;
 
 class JurisprudenceController extends Controller 
 {
+    private const NUMBER_COLUMN = 'gr_number';
+
     private const SORTABLE = [
-        'az'     => ['gr_number', 'asc'],
-        'za'     => ['gr_number', 'desc'],
+        'az'     => ['citation', 'asc'],
+        'za'     => ['citation', 'desc'],
         'oldest' => ['date',      'asc'],
         'newest' => ['date',      'desc'],
     ];
@@ -256,8 +258,22 @@ class JurisprudenceController extends Controller
      */
     private function applySort($query, ?string $sort): void
     {
+        $sort = $sort === 'latest' ? 'newest' : $sort;
+
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
 
+        if (in_array($sort, ['az', 'za'], true)) {
+            // Alphabetical on the visible text column: blank entries last, stable across pages.
+            $query->orderByRaw('CASE WHEN ' . $column . ' IS NULL OR ' . $column . " = '' THEN 1 ELSE 0 END ASC")
+                ->orderBy($column, $direction)
+                ->orderBy(self::NUMBER_COLUMN, $direction)
+                ->orderBy('id', $direction);
+
+            return;
+        }
+
         $query->orderBy($column, $direction);
+
+        // (no numeric cast: G.R. numbers are not a single numeric series)
     }
 }

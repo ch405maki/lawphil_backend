@@ -14,8 +14,8 @@ class ProclamationController extends Controller
     private const NUMBER_COLUMN = 'proc_number';
 
     private const SORTABLE = [
-        'az'     => ['citation', 'asc'],
-        'za'     => ['citation', 'desc'],
+        'az'     => ['description', 'asc'],
+        'za'     => ['description', 'desc'],
         'oldest' => ['date',      'asc'],
         'newest' => ['date',      'desc'],
     ];
@@ -105,7 +105,6 @@ class ProclamationController extends Controller
                 'date' => 'sometimes|required|date',
                 'citation' => 'nullable|string',
                 'tenure' => 'nullable|string',
-                'subject' => 'nullable|string',
                 'description' => 'nullable|string',
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
@@ -125,7 +124,6 @@ class ProclamationController extends Controller
                 'date', 
                 'citation', 
                 'tenure', 
-                'subject', 
                 'description', 
                 'url',
                 'pdf_availability',
@@ -205,6 +203,16 @@ class ProclamationController extends Controller
         $sort = $sort === 'latest' ? 'newest' : $sort;
 
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
+
+        if (in_array($sort, ['az', 'za'], true)) {
+            // Alphabetical on the visible text column: blank entries last, stable across pages.
+            $query->orderByRaw('CASE WHEN ' . $column . ' IS NULL OR ' . $column . " = '' THEN 1 ELSE 0 END ASC")
+                ->orderBy($column, $direction)
+                ->orderBy(self::NUMBER_COLUMN, $direction)
+                ->orderBy('id', $direction);
+
+            return;
+        }
 
         $query->orderBy($column, $direction);
 

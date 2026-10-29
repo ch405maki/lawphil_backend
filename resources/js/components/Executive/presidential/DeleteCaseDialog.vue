@@ -7,7 +7,6 @@ import { useToast } from 'vue-toastification';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -51,8 +50,8 @@ const deleteCase = async () => {
 
     if (response.data.success) {
       toast.success('Presidential Decrees deleted successfully!');
-      emit('update:open', false);
       emit('deleted');
+      emit('update:open', false);
     } else {
       throw new Error(response.data.message || 'Failed to delete presidential decrees');
     }
@@ -83,14 +82,14 @@ const closeDialog = () => {
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel :disabled="processing">Cancel</AlertDialogCancel>
-        <AlertDialogAction 
-          @click="deleteCase" 
+        <Button
           class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           :disabled="processing"
+          @click="deleteCase"
         >
           <Loader2 v-if="processing" class="h-4 w-4 mr-2 animate-spin" />
           {{ processing ? 'Deleting...' : 'Delete' }}
-        </AlertDialogAction>
+        </Button>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

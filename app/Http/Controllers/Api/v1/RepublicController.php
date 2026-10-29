@@ -14,8 +14,8 @@ class RepublicController extends Controller
     private const NUMBER_COLUMN = 'ra_number';
 
     private const SORTABLE = [
-        'az'     => ['citation', 'asc'],
-        'za'     => ['citation', 'desc'],
+        'az'     => ['description', 'asc'],
+        'za'     => ['description', 'desc'],
         'oldest' => ['date',      'asc'],
         'newest' => ['date',      'desc'],
     ];
@@ -203,6 +203,16 @@ class RepublicController extends Controller
         $sort = $sort === 'latest' ? 'newest' : $sort;
 
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
+
+        if (in_array($sort, ['az', 'za'], true)) {
+            // Alphabetical on the visible text column: blank entries last, stable across pages.
+            $query->orderByRaw('CASE WHEN ' . $column . ' IS NULL OR ' . $column . " = '' THEN 1 ELSE 0 END ASC")
+                ->orderBy($column, $direction)
+                ->orderBy(self::NUMBER_COLUMN, $direction)
+                ->orderBy('id', $direction);
+
+            return;
+        }
 
         $query->orderBy($column, $direction);
 

@@ -31,6 +31,9 @@ import ExcelImportDialog from '@/components/Executive/presidential/ExcelImportDi
 
 // Icons
 import {
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
   Search,
   FileSpreadsheet,
   Plus,
@@ -242,6 +245,17 @@ const resetFilters = () => {
   fetchData(1, currentAbortController.signal);
 };
 
+// Header sorting — the sort dropdown and these toggles share one state
+const sortByDate = () => {
+  // 'latest' is what the dropdown uses; the API accepts it as a synonym of newest
+  const newest = filterState.sort === 'latest' || filterState.sort === 'newest';
+  filterState.sort = newest ? 'oldest' : 'latest';
+};
+
+const sortByText = () => {
+  filterState.sort = filterState.sort === 'az' ? 'za' : 'az';
+};
+
 // Initial data fetch
 onMounted(() => {
   fetchData();
@@ -312,8 +326,32 @@ defineExpose({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead class="w-[15%]">P.D. & Date</TableHead>
-              <TableHead class="w-[60%]">Title</TableHead>
+              <TableHead class="w-[15%]">
+                <button
+                  type="button"
+                  class="inline-flex cursor-pointer items-center gap-1.5 font-medium transition-colors hover:text-primary"
+                  title="Sort by date"
+                  @click="sortByDate"
+                >
+                  P.D. & Date
+                  <ArrowDown v-if="filterState.sort === 'latest' || filterState.sort === 'newest'" class="h-3.5 w-3.5" />
+                  <ArrowUp v-else-if="filterState.sort === 'oldest'" class="h-3.5 w-3.5" />
+                  <ArrowUpDown v-else class="h-3.5 w-3.5 opacity-40" />
+                </button>
+              </TableHead>
+              <TableHead class="w-[60%]">
+                <button
+                  type="button"
+                  class="inline-flex cursor-pointer items-center gap-1.5 font-medium transition-colors hover:text-primary"
+                  title="Sort alphabetically"
+                  @click="sortByText"
+                >
+                  Title
+                  <ArrowUp v-if="filterState.sort === 'az'" class="h-3.5 w-3.5" />
+                  <ArrowDown v-else-if="filterState.sort === 'za'" class="h-3.5 w-3.5" />
+                  <ArrowUpDown v-else class="h-3.5 w-3.5 opacity-40" />
+                </button>
+              </TableHead>
               <TableHead class="w-[9%] text-right">URL</TableHead>
               <TableHead class="w-[6%] text-right">PDF</TableHead>
               <TableHead class="w-[10%] text-right">Actions</TableHead>

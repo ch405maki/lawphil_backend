@@ -112,7 +112,6 @@ class PresidentialController extends Controller
                 'reference' => 'nullable|string',
                 'url' => 'nullable|string',
                 'pdf_availability' => 'nullable|boolean',
-                'subject' => 'nullable|string',
                 'tenure' => 'nullable|string',
                 'pdf_path' => 'nullable|string',
             ]);
@@ -133,7 +132,6 @@ class PresidentialController extends Controller
                 'reference', 
                 'url',
                 'pdf_availability',
-                'subject',
                 'tenure',
                 'pdf_path'
             ]);
@@ -211,6 +209,16 @@ class PresidentialController extends Controller
         $sort = $sort === 'latest' ? 'newest' : $sort;
 
         [$column, $direction] = self::SORTABLE[$sort] ?? self::SORTABLE['newest'];
+
+        if (in_array($sort, ['az', 'za'], true)) {
+            // Alphabetical on the visible text column: blank entries last, stable across pages.
+            $query->orderByRaw('CASE WHEN ' . $column . ' IS NULL OR ' . $column . " = '' THEN 1 ELSE 0 END ASC")
+                ->orderBy($column, $direction)
+                ->orderBy(self::NUMBER_COLUMN, $direction)
+                ->orderBy('id', $direction);
+
+            return;
+        }
 
         $query->orderBy($column, $direction);
 
